@@ -94,6 +94,11 @@ Subscriptions are stored in `subscribers` (exportable as CSV from
 - wire a **Supabase Edge Function** triggered on `posts` insert
   (`status` → `published`) that calls your email provider's API.
 
+Ready-made HTML templates for Resend live in `resend/templates/`. Publish them
+in the Resend dashboard (welcome, newsletter, webinar announcement, webinar
+reminder) and paste their IDs or aliases into `RESEND_TEMPLATE_*` in
+`.env.example`.
+
 ## Privacy & analytics model
 
 - The cookie banner stores the visitor's choice in their browser
@@ -117,6 +122,7 @@ src/
 supabase/
   schema.sql           # tables + RLS policies (run first)
   seed.sql             # sample content (optional)
+  ci/                  # CI-only Postgres shim + assertions (never run in prod)
 ```
 
 ## Licensing note on images

@@ -31,6 +31,7 @@ export interface Post {
   seo_description: string | null;
   references: ReferenceItem[];
   reading_time_minutes: number | null;
+  like_count: number;
   author_id: string | null;
   created_at: string;
   updated_at: string;
@@ -79,4 +80,34 @@ export interface PageView {
   referrer: string | null;
   user_agent: string | null;
   created_at: string;
+}
+
+export interface Comment {
+  id: string;
+  post_id: string;
+  parent_id: string | null;
+  user_id: string | null;
+  author_name: string;
+  body: string;
+  status: "visible" | "hidden" | "deleted";
+  like_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PollOption {
+  id: string;
+  poll_id: string;
+  label: string;
+  sort_order: number;
+  vote_count: number;
+}
+
+export interface Poll {
+  id: string;
+  post_id: string;
+  question: string;
+  status: "draft" | "open" | "closed";
+  allow_results_before_vote: boolean;
+  poll_options: PollOption[];
 }

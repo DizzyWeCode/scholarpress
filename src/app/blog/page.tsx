@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getSupabaseAnon } from "@/lib/supabase/public";
 import { PostRow } from "@/components/post-card";
 import { Reveal } from "@/components/reveal";
+import { requireSignedIn } from "@/lib/auth";
 import type { Post } from "@/lib/types";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Writing",
@@ -15,16 +17,14 @@ export default async function BlogPage({
 }: {
   searchParams: { tag?: string };
 }) {
-  const supabase = getSupabaseAnon();
+  const { supabase } = await requireSignedIn("/blog");
   let posts: Post[] = [];
-  if (supabase) {
-    const { data } = await supabase
-      .from("posts")
-      .select("*")
-      .eq("status", "published")
-      .order("published_at", { ascending: false });
-    posts = (data ?? []) as Post[];
-  }
+  const { data } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("status", "published")
+    .order("published_at", { ascending: false });
+  posts = (data ?? []) as Post[];
 
   const tags = [...new Set(posts.flatMap((p) => p.tags))].slice(0, 12);
   const activeTag =

@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
-import { SITE } from "@/lib/site";
+
+function getSafeNext() {
+  const value = new URLSearchParams(window.location.search).get("next");
+  return value?.startsWith("/") && !value.startsWith("//") ? value : "/account";
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -24,10 +28,11 @@ export default function LoginPage() {
     setError(null);
     try {
       const supabase = getSupabaseBrowser();
+      const next = getSafeNext();
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/account`,
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
         },
       });
       if (oauthError) setError(oauthError.message);
@@ -45,10 +50,11 @@ export default function LoginPage() {
     setError(null);
     try {
       const supabase = getSupabaseBrowser();
+      const next = getSafeNext();
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/account`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
         },
       });
       if (otpError) setError(otpError.message);
@@ -69,8 +75,8 @@ export default function LoginPage() {
         Join the readership
       </h1>
       <p className="mt-4 text-sm leading-relaxed text-ink-3">
-        Sign in to subscribe to {SITE.name}&rsquo;s writing and webinar
-        announcements. No passwords — use Google or a one-time email link.
+        Sign in to read member content and manage your newsletter subscription.
+        No passwords — use Google or a one-time email link.
       </p>
 
       {error ? (

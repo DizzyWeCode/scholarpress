@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { getSupabaseAnon } from "@/lib/supabase/public";
 import { PaperCard } from "@/components/paper-card";
 import { Reveal } from "@/components/reveal";
 import { SITE } from "@/lib/site";
+import { requireSignedIn } from "@/lib/auth";
 import type { Paper } from "@/lib/types";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Research",
@@ -13,16 +13,14 @@ export const metadata: Metadata = {
 };
 
 export default async function PapersPage() {
-  const supabase = getSupabaseAnon();
+  const { supabase } = await requireSignedIn("/papers");
   let papers: Paper[] = [];
-  if (supabase) {
-    const { data } = await supabase
-      .from("papers")
-      .select("*")
-      .eq("status", "published")
-      .order("year", { ascending: false });
-    papers = (data ?? []) as Paper[];
-  }
+  const { data } = await supabase
+    .from("papers")
+    .select("*")
+    .eq("status", "published")
+    .order("year", { ascending: false });
+  papers = (data ?? []) as Paper[];
 
   const byYear = papers.reduce<Record<string, Paper[]>>((acc, p) => {
     const y = p.year ? String(p.year) : "Other";

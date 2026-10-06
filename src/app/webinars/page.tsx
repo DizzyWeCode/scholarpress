@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { getSupabaseAnon } from "@/lib/supabase/public";
 import { WebinarCard } from "@/components/webinar-card";
 import { Reveal } from "@/components/reveal";
 import { NewsletterForm } from "@/components/newsletter-form";
+import { requireSignedIn } from "@/lib/auth";
 import type { Webinar } from "@/lib/types";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Webinars",
@@ -13,21 +13,19 @@ export const metadata: Metadata = {
 };
 
 export default async function WebinarsPage() {
-  const supabase = getSupabaseAnon();
+  const { supabase } = await requireSignedIn("/webinars");
   let upcoming: Webinar[] = [];
   let past: Webinar[] = [];
-  if (supabase) {
-    const { data } = await supabase
-      .from("webinars")
-      .select("*")
-      .in("status", ["upcoming", "past"])
-      .order("starts_at", { ascending: false });
-    const all = (data ?? []) as Webinar[];
-    upcoming = all
-      .filter((w) => w.status === "upcoming")
-      .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
-    past = all.filter((w) => w.status === "past");
-  }
+  const { data } = await supabase
+    .from("webinars")
+    .select("*")
+    .in("status", ["upcoming", "past"])
+    .order("starts_at", { ascending: false });
+  const all = (data ?? []) as Webinar[];
+  upcoming = all
+    .filter((w) => w.status === "upcoming")
+    .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  past = all.filter((w) => w.status === "past");
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
