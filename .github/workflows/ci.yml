@@ -1,0 +1,164 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Only superseded pull-request runs are cancelled. Pushes to main are never
+# cancelled so an in-flight production deploy always finishes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    name: Typecheck, lint & build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      # Deliberately run with no environment variables. The app is expected
+      # to build without them, so this fails the build if anything starts
+      # requiring secrets at build time.
+      - name: Build
+        run: npm run build
+
+  schema:
+    name: Validate database schema
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: scholarpress
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d scholarpress"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: scholarpress
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Ensure psql is available
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends postgresql-client
+          fi
+          psql --version
+
+      # schema.sql assumes a real Supabase project (auth.users, auth.uid(),
+      # auth.jwt(), the API roles). Supply those first — see the file header.
+      - name: Apply Supabase auth shim
+        run: psql --set=ON_ERROR_STOP=1 --file=supabase/ci/00-auth-shim.sql
+
+      - name: Apply schema (first pass)
+        run: psql --set=ON_ERROR_STOP=1 --file=supabase/schema.sql
+
+      # Re-running must be a no-op: every object is "if not exists" or
+      # "drop ... if exists" first.
+      - name: Apply schema (second pass, must be idempotent)
+        run: psql --set=ON_ERROR_STOP=1 --file=supabase/schema.sql
+
+      - name: Apply seed data
+        run: psql --set=ON_ERROR_STOP=1 --file=supabase/seed.sql
+
+      - name: Assert schema, RLS policies and seed data
+        run: psql --set=ON_ERROR_STOP=1 --file=supabase/ci/10-assertions.sql
+
+  deploy:
+    name: Deploy to production
+    needs: [web, schema]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    steps:
+      - name: Check for Vercel credentials
+        id: vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VERCEL_PROJECT_ID" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping deploy — add VERCEL_TOKEN, VERCEL_ORG_ID and VERCEL_PROJECT_ID as repository secrets to enable it (or use Vercel's Git integration instead)."
+          fi
+
+      - name: Check out repository
+        if: steps.vercel.outputs.configured == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        if: steps.vercel.outputs.configured == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.vercel.outputs.configured == 'true'
+        run: npm ci
+
+      - name: Install Vercel CLI
+        if: steps.vercel.outputs.configured == 'true'
+        run: npm install --global vercel@62
+
+      - name: Pull project settings and environment variables
+        if: steps.vercel.outputs.configured == 'true'
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build with Vercel
+        if: steps.vercel.outputs.configured == 'true'
+        run: vercel build --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Deploy prebuilt output
+        if: steps.vercel.outputs.configured == 'true'
+        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

@@ -85,6 +85,45 @@ update public.profiles set role = 'owner' where email = 'you@example.com';
    to Supabase **Authentication → URL Configuration** (Site URL +
    `https://your-domain/auth/callback` redirect).
 
+## Continuous integration & deployment
+
+`.github/workflows/ci.yml` runs on every pull request and on every push to
+`main`:
+
+| Job      | What it does |
+| -------- | ------------ |
+| `web`    | `npm ci` → `npm run typecheck` → `npm run lint` → `npm run build`, deliberately **without** any environment variables so the build can never quietly start depending on secrets. |
+| `schema` | Starts a throwaway Postgres 16, applies `supabase/ci/00-auth-shim.sql` (a CI stand-in for Supabase's `auth` schema), runs `supabase/schema.sql` **twice** to prove it is idempotent, applies `supabase/seed.sql`, then runs `supabase/ci/10-assertions.sql`. |
+| `deploy` | On pushes to `main` only, and only after both jobs above pass. |
+
+`deploy` builds with the Vercel CLI and ships the prebuilt output to
+production. It needs three repository secrets:
+
+| Secret               | Where it comes from |
+| -------------------- | ------------------- |
+| `VERCEL_TOKEN`       | vercel.com → **Settings → Tokens** |
+| `VERCEL_ORG_ID`      | `cat .vercel/repo.json` locally, or `vercel link` then `cat .vercel/project.json` |
+| `VERCEL_PROJECT_ID`  | same file, `projectId` field |
+
+Until all three are set the job prints a notice and skips — the build and
+schema checks still gate every merge. If you prefer Vercel's own Git
+integration (step 6 above), you can leave the secrets unset and deploy is a
+no-op.
+
+To reproduce CI locally:
+
+```bash
+npm ci && npm run typecheck && npm run lint && npm run build
+psql -v ON_ERROR_STOP=1 -f supabase/ci/00-auth-shim.sql   # against an empty DB
+psql -v ON_ERROR_STOP=1 -f supabase/schema.sql
+psql -v ON_ERROR_STOP=1 -f supabase/schema.sql            # must be a no-op
+psql -v ON_ERROR_STOP=1 -f supabase/seed.sql
+psql -v ON_ERROR_STOP=1 -f supabase/ci/10-assertions.sql
+```
+
+`supabase/ci/` exists only for CI — never run those two files against a real
+Supabase project.
+
 ## Sending newsletter emails
 
 Subscriptions are stored in `subscribers` (exportable as CSV from
@@ -123,6 +162,8 @@ supabase/
   schema.sql           # tables + RLS policies (run first)
   seed.sql             # sample content (optional)
   ci/                  # CI-only Postgres shim + assertions (never run in prod)
+.github/workflows/
+  ci.yml               # typecheck, lint, build, schema validation, deploy
 ```
 
 ## Licensing note on images
