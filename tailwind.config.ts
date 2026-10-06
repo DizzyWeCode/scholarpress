@@ -9,7 +9,7 @@ const config: Config = {
           DEFAULT: "#0a0a0a",
           2: "#3d3d3d",
           3: "#6b6b6b",
-          4: "#9c9c9c",
+          4: "#737373",
         },
         paper: {
           DEFAULT: "#fafafa",

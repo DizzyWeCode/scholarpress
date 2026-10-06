@@ -43,8 +43,10 @@ body {
   border-radius: 2px;
 }
 
-/* Scroll-triggered reveal — opacity/blur/rise, 700ms expo ease */
-.reveal {
+/* Scroll-triggered reveal — opacity/blur/rise, 700ms expo ease.
+   Hidden only when JS is available (.js class set by an inline head script),
+   so content stays visible when scripts fail or are blocked. */
+.js .reveal {
   opacity: 0;
   filter: blur(10px);
   transform: translateY(12px);
@@ -59,6 +61,7 @@ body {
   transform: translateY(0);
 }
 @media (prefers-reduced-motion: reduce) {
+  .js .reveal,
   .reveal {
     opacity: 1;
     filter: none;
@@ -97,7 +100,7 @@ body {
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
-  text-decoration-color: #9c9c9c;
+  text-decoration-color: #737373;
   transition: text-decoration-color 150ms;
 }
 .article-body a:hover {
@@ -168,7 +171,7 @@ body {
   min-height: 320px;
 }
 .tiptap p.is-editor-empty:first-child::before {
-  color: #9c9c9c;
+  color: #737373;
   content: attr(data-placeholder);
   float: left;
   height: 0;

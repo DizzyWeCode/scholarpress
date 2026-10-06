@@ -1,18 +1,18 @@
 /**
  * Central site configuration — rebrand the whole site from this one file.
- * Replace the placeholder persona below with the owner's real details.
  */
 export const SITE = {
-  name: "Dr. Alex Moyo",
-  tagline: "Researcher in Information Systems & Digital Society",
-  siteTitle: "Alex Moyo — Research, Writing & Webinars",
+  name: "Dr Fraction Dzinjalamala",
+  tagline: "Clinical pharmacologist working to outsmart drug-resistant malaria",
+  siteTitle: "Fraction Dzinjalamala — Research, Writing & Webinars",
   description:
-    "The academic home of Dr. Alex Moyo: peer-reviewed research, long-form writing, and public webinars on information systems and digital society.",
-  affiliation: "Department of Information Systems",
-  email: "hello@example.com",
+    "The academic home of Dr Fraction Dzinjalamala: malaria chemotherapy, antimicrobial drug resistance, and clinical pharmacology — research, writing, and public webinars from Malawi.",
+  affiliation: "Department of Clinical Sciences, MUST",
+  email: "fdzinjalamala@must.ac.mw",
   // Optional scholarly profiles — leave empty to hide
   orcid: "",
   googleScholar: "",
+  researchgate: "https://www.researchgate.net/profile/Fraction-Dzinjalamala",
   twitter: "",
   linkedin: "",
   // Footer attribution note for third-party imagery used across the site

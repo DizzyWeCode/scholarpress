@@ -41,6 +41,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${newsreader.variable}`}>
       <body>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "document.documentElement.classList.add('js')",
+          }}
+        />
         <SiteHeader />
         <main id="main">{children}</main>
         <SiteFooter />

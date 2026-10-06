@@ -144,7 +144,7 @@ export default async function HomePage() {
           <div className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
             <Reveal>
               <div className="flex items-baseline justify-between">
-                <h2 className="text-xs uppercase tracking-[0.25em] text-paper/40">
+                <h2 className="text-xs uppercase tracking-[0.25em] text-paper/60">
                   Upcoming webinars
                 </h2>
                 <Link
@@ -155,7 +155,15 @@ export default async function HomePage() {
                 </Link>
               </div>
             </Reveal>
-            <div className="mt-10 grid gap-6 md:grid-cols-3">
+            <div
+              className={`mt-10 grid gap-6 ${
+                webinars.length >= 3
+                  ? "md:grid-cols-3"
+                  : webinars.length === 2
+                    ? "md:grid-cols-2"
+                    : "md:max-w-lg"
+              }`}
+            >
               {webinars.map((w, i) => (
                 <Reveal key={w.id} delay={i * 90}>
                   <WebinarCard webinar={w} dark />
@@ -193,6 +201,34 @@ export default async function HomePage() {
               Publications will appear here as they are released.
             </p>
           )}
+        </div>
+      </section>
+
+      {/* About teaser — short hook, full story on /about */}
+      <section className="border-t border-line">
+        <div className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
+          <Reveal>
+            <div className="max-w-2xl">
+              <h2 className="text-xs uppercase tracking-[0.25em] text-ink-4">
+                About
+              </h2>
+              <p className="mt-6 font-serif text-3xl leading-snug tracking-tight text-ink sm:text-4xl">
+                Twenty years chasing a moving target: the malaria parasite.
+              </p>
+              <p className="mt-5 text-base leading-relaxed text-ink-3">
+                From the lab bench at the Blantyre Malaria Project to lecture
+                halls in Blantyre, Cape Town, and Glasgow — clinician,
+                pharmacologist, and bioethicist working to keep antimalarial
+                drugs effective.
+              </p>
+              <Link
+                href="/about"
+                className="mt-7 inline-flex items-center gap-1.5 text-sm text-ink-3 transition-colors hover:text-ink"
+              >
+                Read the full story <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </Reveal>
         </div>
       </section>
 

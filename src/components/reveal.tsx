@@ -22,6 +22,10 @@ export function Reveal({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setVisible(true);
+      return;
+    }
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -29,7 +33,8 @@ export function Reveal({
           observer.disconnect();
         }
       },
-      { threshold: 0.12 },
+      // threshold 0 keeps elements taller than the viewport from staying hidden
+      { threshold: 0, rootMargin: "0px 0px -40px 0px" },
     );
     observer.observe(el);
     return () => observer.disconnect();

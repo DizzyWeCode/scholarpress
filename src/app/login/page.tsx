@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import { SITE } from "@/lib/site";
 
@@ -8,31 +8,56 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "auth") {
+      setError(
+        "Sign-in failed or was cancelled. Please try again — if it keeps failing, contact the site owner.",
+      );
+    }
+  }, []);
 
   async function signInWithGoogle() {
     setBusy(true);
-    const supabase = getSupabaseBrowser();
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/account`,
-      },
-    });
+    setError(null);
+    try {
+      const supabase = getSupabaseBrowser();
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=/account`,
+        },
+      });
+      if (oauthError) setError(oauthError.message);
+    } catch {
+      setError("Could not start Google sign-in. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function signInWithEmail(e: React.FormEvent) {
     e.preventDefault();
     if (!email.includes("@")) return;
     setBusy(true);
-    const supabase = getSupabaseBrowser();
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/account`,
-      },
-    });
-    setBusy(false);
-    if (!error) setSent(true);
+    setError(null);
+    try {
+      const supabase = getSupabaseBrowser();
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/account`,
+        },
+      });
+      if (otpError) setError(otpError.message);
+      else setSent(true);
+    } catch {
+      setError("Could not send the sign-in link. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -47,6 +72,16 @@ export default function LoginPage() {
         Sign in to subscribe to {SITE.name}&rsquo;s writing and webinar
         announcements. No passwords — use Google or a one-time email link.
       </p>
+
+      {error ? (
+        <p
+          role="alert"
+          className="mt-6 border border-ink/30 bg-paper-2 px-4 py-3 text-sm text-ink"
+          style={{ borderRadius: 7 }}
+        >
+          {error}
+        </p>
+      ) : null}
 
       <button
         onClick={signInWithGoogle}
