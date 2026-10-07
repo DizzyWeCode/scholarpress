@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useToast } from "@/components/toast";
 import type { Webinar } from "@/lib/types";
 import { Mail, Plus, Trash2, X } from "lucide-react";
 
@@ -16,6 +18,8 @@ export default function AdminWebinarsPage() {
   const [creating, setCreating] = useState(false);
   const [announcing, setAnnouncing] = useState<Webinar | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Webinar | null>(null);
+  const { push } = useToast();
 
   async function load() {
     const { data } = await getSupabaseBrowser()
@@ -29,8 +33,10 @@ export default function AdminWebinarsPage() {
   }, []);
 
   async function remove(id: string) {
-    if (!window.confirm("Delete this webinar?")) return;
-    await getSupabaseBrowser().from("webinars").delete().eq("id", id);
+    const { error } = await getSupabaseBrowser().from("webinars").delete().eq("id", id);
+    setPendingDelete(null);
+    if (error) push({ kind: "error", title: "Could not delete webinar", body: error.message });
+    else push({ kind: "success", title: "Webinar deleted." });
     load();
   }
 
@@ -88,7 +94,7 @@ export default function AdminWebinarsPage() {
                   <Mail className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => remove(w.id)}
+                  onClick={() => setPendingDelete(w)}
                   className="justify-self-start p-1 text-ink-4 transition-colors hover:text-red-700 sm:justify-self-end"
                   aria-label={`Delete ${w.title}`}
                 >
@@ -125,6 +131,15 @@ export default function AdminWebinarsPage() {
           }}
         />
       )}
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title="Delete this webinar?"
+        body={`“${pendingDelete?.title ?? ""}” will be permanently removed. This cannot be undone.`}
+        confirmLabel="Delete webinar"
+        danger
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => pendingDelete && void remove(pendingDelete.id)}
+      />
     </div>
   );
 }
@@ -141,11 +156,13 @@ function AnnounceDialog({
   const [testEmail, setTestEmail] = useState("");
   const [busy, setBusy] = useState<"test" | "all" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmAll, setConfirmAll] = useState(false);
 
-  async function send(mode: "test" | "all") {
-    if (mode === "all" && !window.confirm(
-      `Send the "${webinar.title}" announcement to ALL subscribers?`,
-    )) return;
+  async function send(mode: "test" | "all", confirmed = false) {
+    if (mode === "all" && !confirmed) {
+      setConfirmAll(true);
+      return;
+    }
     if (mode === "test" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail.trim())) {
       setError("Enter a valid test email address.");
       return;
@@ -236,6 +253,19 @@ function AnnounceDialog({
           </p>
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmAll}
+        title="Email all subscribers?"
+        body={`Send the “${webinar.title}” announcement to every subscriber now? This cannot be undone. Send a test first if you have not already.`}
+        confirmLabel="Send to everyone"
+        danger
+        busy={busy === "all"}
+        onCancel={() => setConfirmAll(false)}
+        onConfirm={() => {
+          setConfirmAll(false);
+          void send("all", true);
+        }}
+      />
     </div>
   );
 }

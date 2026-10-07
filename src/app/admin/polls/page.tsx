@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useToast } from "@/components/toast";
 import type { Poll, Post } from "@/lib/types";
 import { Plus, Trash2 } from "lucide-react";
 
@@ -33,6 +35,8 @@ export default function AdminPollsPage() {
   const [polls, setPolls] = useState<PollRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<PollRow | null>(null);
+  const { push } = useToast();
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -215,7 +219,6 @@ export default function AdminPollsPage() {
   }
 
   async function removePoll(poll: PollRow) {
-    if (!window.confirm(`Delete this poll and all of its votes? This cannot be undone.`)) return;
     setError(null);
     setBusy(true);
     const { error: deleteError } = await getSupabaseBrowser()
@@ -225,7 +228,11 @@ export default function AdminPollsPage() {
     if (deleteError) {
       console.error("delete poll failed", deleteError);
       setError("The poll could not be deleted. Please try again.");
+      push({ kind: "error", title: "Could not delete poll" });
+    } else {
+      push({ kind: "success", title: "Poll deleted." });
     }
+    setPendingDelete(null);
     if (editingId === poll.id) {
       setEditingId(null);
       setDraft(null);
@@ -414,7 +421,7 @@ export default function AdminPollsPage() {
                         </button>
                       )}
                       <button
-                        onClick={() => void removePoll(poll)}
+                        onClick={() => setPendingDelete(poll)}
                         disabled={busy}
                         className="text-ink-3 underline underline-offset-2 hover:text-red-700 disabled:opacity-50"
                       >
@@ -548,6 +555,15 @@ export default function AdminPollsPage() {
           })
         )}
       </div>
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title="Delete this poll?"
+        body="This poll and all of its votes will be permanently removed. This cannot be undone."
+        confirmLabel="Delete poll"
+        danger
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => pendingDelete && void removePoll(pendingDelete)}
+      />
     </div>
   );
 }

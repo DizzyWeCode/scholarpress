@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import { SITE, absoluteUrl } from "@/lib/site";
+import { SITE, absoluteOgImage, absoluteUrl } from "@/lib/site";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { CookieBanner } from "@/components/cookie-banner";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
+import { ToastProvider } from "@/components/toast";
 
 // Self-hosted variable subsets (latin) from Google Fonts — Inter & Newsreader,
 // SIL Open Font License. Regenerate: see scripts/ in the repo root.
@@ -41,11 +42,13 @@ export const metadata: Metadata = {
     siteName: SITE.siteTitle,
     title: SITE.siteTitle,
     description: SITE.description,
+    images: [{ url: absoluteOgImage() }],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE.siteTitle,
     description: SITE.description,
+    images: [absoluteOgImage()],
   },
 };
 
@@ -60,11 +63,13 @@ export default function RootLayout({
             __html: "document.documentElement.classList.add('js')",
           }}
         />
-        <SiteHeader />
-        <main id="main">{children}</main>
-        <SiteFooter />
-        <CookieBanner />
-        <AnalyticsTracker />
+        <ToastProvider>
+          <SiteHeader />
+          <main id="main">{children}</main>
+          <SiteFooter />
+          <CookieBanner />
+          <AnalyticsTracker />
+        </ToastProvider>
       </body>
     </html>
   );

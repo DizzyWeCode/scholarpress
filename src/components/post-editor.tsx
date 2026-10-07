@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import { RichEditor } from "@/components/rich-editor";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useToast } from "@/components/toast";
 import { readingTimeFromDoc, slugify } from "@/lib/utils";
 import { uploadPublicImage } from "@/lib/uploads/media";
 import type { Post, ReferenceItem, PostStatus } from "@/lib/types";
@@ -36,6 +38,8 @@ export function PostEditor({ post }: { post?: Post }) {
   const [saving, setSaving] = useState<PostStatus | null>(null);
   const [coverUploading, setCoverUploading] = useState(false);
   const [message, setMessage] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const { push } = useToast();
   const coverInputRef = useRef<HTMLInputElement>(null);
 
   async function uploadCover(file: File | undefined) {
@@ -110,16 +114,28 @@ export function PostEditor({ post }: { post?: Post }) {
           ? "That slug is already taken — choose another."
           : `Save failed: ${error.message}`,
       );
+      push({ kind: "error", title: status === "published" ? "Could not publish post" : "Save failed", body: error.message });
       return;
     }
+    push({
+      kind: "success",
+      title: status === "published" ? "Post published." : status === "scheduled" ? "Post scheduled." : "Draft saved.",
+    });
     router.push("/admin/posts");
     router.refresh();
   }
 
   async function remove() {
-    if (!post || !window.confirm("Delete this post permanently?")) return;
+    if (!post) return;
     const supabase = getSupabaseBrowser();
-    await supabase.from("posts").delete().eq("id", post.id);
+    const { error } = await supabase.from("posts").delete().eq("id", post.id);
+    setConfirmDelete(false);
+    if (error) {
+      setMessage(`Delete failed: ${error.message}`);
+      push({ kind: "error", title: "Could not delete post", body: error.message });
+      return;
+    }
+    push({ kind: "success", title: "Post deleted." });
     router.push("/admin/posts");
     router.refresh();
   }
@@ -318,13 +334,22 @@ export function PostEditor({ post }: { post?: Post }) {
         </button>
         {post && (
           <button
-            onClick={remove}
+            onClick={() => setConfirmDelete(true)}
             className="ml-auto text-sm text-ink-4 underline underline-offset-2 transition-colors hover:text-red-700"
           >
             Delete
           </button>
         )}
       </div>
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete this post?"
+        body={`“${title || "Untitled"}” will be permanently removed, including its comments, likes, and poll votes. This cannot be undone.`}
+        confirmLabel="Delete post"
+        danger
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={() => void remove()}
+      />
     </div>
   );
 }

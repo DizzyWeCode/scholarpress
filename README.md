@@ -85,6 +85,18 @@ update public.profiles set role = 'owner' where email = 'you@example.com';
    to Supabase **Authentication → URL Configuration** (Site URL +
    `https://your-domain/auth/callback` redirect).
 
+### 7. Pre-launch checklist (custom domain)
+
+- [ ] Custom domain attached in Vercel (e.g. `https://dr-fraction.me`)
+- [ ] `NEXT_PUBLIC_SITE_URL` = canonical `https://…` domain (production never falls back to localhost — see `src/lib/site.ts`)
+- [ ] Supabase Auth → URL Configuration: Site URL + redirect URLs include the custom domain
+- [ ] `https://<domain>/sitemap.xml` and `/robots.txt` return 200 with `https` URLs
+- [ ] Share an article: link + OG image use the custom domain
+- [ ] Default OG image at `public/covers/default-og.png` (1200×630 branded) + per-post `cover_image_url` with alt/credit
+- [ ] Replace hero (`SITE.images.hero`) and about portrait (`SITE.images.aboutPortrait`) slots with real photos
+- [ ] Run migration `supabase/migrations/2026-10-07-account-bookmarks-avatars.sql` (or full `schema.sql`) for bookmarks + profile fields + `avatars` bucket
+- [ ] Smoke test: account page shows only your own saved/liked/comments; bookmarks RLS blocks cross-user reads
+
 ## Continuous integration & deployment
 
 `.github/workflows/ci.yml` runs on every pull request and on every push to

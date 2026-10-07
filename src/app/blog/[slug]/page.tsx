@@ -10,7 +10,8 @@ import { ShareButtons } from "@/components/share-buttons";
 import { Reveal } from "@/components/reveal";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { ArticleEngagement } from "@/components/article-engagement";
-import { SITE, absoluteUrl } from "@/lib/site";
+import { BookmarkButton } from "@/components/bookmark-button";
+import { SITE, absoluteOgImage, absoluteUrl } from "@/lib/site";
 import { excerptFromDoc } from "@/lib/utils";
 import type { Post } from "@/lib/types";
 
@@ -39,6 +40,7 @@ export async function generateMetadata({
     post.seo_description ?? post.excerpt ?? excerptFromDoc(post.content);
   const title = post.seo_title ?? post.title;
   const url = absoluteUrl(`/blog/${post.slug}`);
+  const ogImage = absoluteOgImage(post.cover_image_url);
   return {
     title,
     description,
@@ -51,9 +53,14 @@ export async function generateMetadata({
       publishedTime: post.published_at ?? undefined,
       authors: [SITE.name],
       tags: post.tags,
-      images: post.cover_image_url ? [post.cover_image_url] : undefined,
+      images: [{ url: ogImage, alt: post.title }],
     },
-    twitter: { card: "summary_large_image", title, description },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
+    },
   };
 }
 
@@ -158,6 +165,7 @@ export default async function ArticlePage({
 
       <div className="mt-12 flex flex-col gap-6 border-t border-line pt-8 sm:flex-row sm:items-center sm:justify-between">
         <ShareButtons url={url} title={post.title} />
+        <BookmarkButton postId={post.id} />
       </div>
 
       <ArticleEngagement postId={post.id} initialLikes={post.like_count ?? 0} />

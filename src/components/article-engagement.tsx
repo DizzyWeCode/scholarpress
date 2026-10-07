@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useToast } from "@/components/toast";
 import type { Comment, Poll } from "@/lib/types";
 
 function signInHref(pathname: string) {
@@ -33,6 +35,8 @@ export function ArticleEngagement({
   const [replyBody, setReplyBody] = useState("");
   const [polls, setPolls] = useState<Poll[]>([]);
   const [votes, setVotes] = useState<Record<string, string>>({});
+  const [pendingDelete, setPendingDelete] = useState<Comment | null>(null);
+  const { push } = useToast();
 
   const load = useCallback(async () => {
     const supabase = getSupabaseBrowser();
@@ -166,10 +170,12 @@ export function ArticleEngagement({
       if (parentId) setReplyBody("");
       else setBody("");
       setReplyTo(null);
+      push({ kind: "success", title: "Comment posted." });
       await load();
     } catch (err) {
       console.error("addComment failed", err);
       setError("Your comment could not be posted. Please try again.");
+      push({ kind: "error", title: "Could not post comment", body: "Please try again." });
     } finally {
       setBusy(false);
     }
@@ -203,7 +209,6 @@ export function ArticleEngagement({
 
   async function deleteComment(comment: Comment) {
     if (!userId || comment.user_id !== userId || busy) return;
-    if (!window.confirm("Delete your comment? This cannot be undone.")) return;
     setError(null);
     setBusy(true);
     try {
@@ -214,10 +219,13 @@ export function ArticleEngagement({
         .eq("id", comment.id)
         .eq("user_id", userId);
       if (deleteError) throw deleteError;
+      setPendingDelete(null);
+      push({ kind: "success", title: "Comment deleted." });
       await load();
     } catch (err) {
       console.error("deleteComment failed", err);
       setError("Your comment could not be deleted. Please try again.");
+      push({ kind: "error", title: "Could not delete comment", body: "Please try again." });
     } finally {
       setBusy(false);
     }
@@ -380,12 +388,22 @@ export function ArticleEngagement({
               setReplyBody={setReplyBody}
               busy={busy}
               onLike={(target) => void toggleCommentLike(target)}
-              onDelete={(target) => void deleteComment(target)}
+              onDelete={(target) => setPendingDelete(target)}
               onSubmitReply={(parentId) => void addComment(parentId)}
             />
           ))}
         </div>
       </section>
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title="Delete this comment?"
+        body="This removes your comment for everyone. This cannot be undone."
+        confirmLabel="Delete comment"
+        danger
+        busy={busy}
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => pendingDelete && void deleteComment(pendingDelete)}
+      />
     </>
   );
 }

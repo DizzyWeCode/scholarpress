@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useToast } from "@/components/toast";
 import { Send } from "lucide-react";
 
 type BatchResult = {
@@ -24,6 +26,8 @@ export default function AdminNewsletterPage() {
   const [busy, setBusy] = useState<null | "test" | "all">(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SendResponse | null>(null);
+  const [confirmAll, setConfirmAll] = useState(false);
+  const { push } = useToast();
 
   useEffect(() => {
     const supabase = getSupabaseBrowser();
@@ -59,15 +63,12 @@ export default function AdminNewsletterPage() {
 
     if (mode === "test" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail.trim())) {
       setError("Enter a valid test email address first.");
+      push({ kind: "warning", title: "Enter a valid test email first." });
       return;
     }
     if (mode === "all") {
-      const confirmed = window.confirm(
-        `Send this newsletter to ${subscriberCount} subscriber${
-          subscriberCount === 1 ? "" : "s"
-        }? This cannot be undone.`,
-      );
-      if (!confirmed) return;
+      setConfirmAll(true);
+      return;
     }
 
     setBusy(mode);
@@ -91,8 +92,11 @@ export default function AdminNewsletterPage() {
         return;
       }
       setResult(json as SendResponse);
+      if (mode === "test") push({ kind: "success", title: "Test email sent." });
+      else push({ kind: "success", title: `Newsletter sent to ${json.sent} subscriber${json.sent === 1 ? "" : "s"}.` });
     } catch {
       setError("Network error — nothing was sent.");
+      push({ kind: "error", title: "Network error", body: "Nothing was sent. Try again." });
     } finally {
       setBusy(null);
     }
@@ -214,6 +218,50 @@ export default function AdminNewsletterPage() {
           ) : null}
         </div>
       </section>
+      <ConfirmDialog
+        open={confirmAll}
+        title={`Send to ${subscriberCount ?? "all"} subscribers?`}
+        body="This emails every subscriber immediately and cannot be undone. Send yourself a test first if you have not already."
+        confirmLabel={busy === "all" ? "Sending…" : "Send to everyone"}
+        danger
+        busy={busy === "all"}
+        onCancel={() => setConfirmAll(false)}
+        onConfirm={() => {
+          setConfirmAll(false);
+          void (async () => {
+            setBusy("all");
+            setError(null);
+            setResult(null);
+            try {
+              const res = await fetch("/api/admin/newsletter", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  mode: "all",
+                  subject: subject.trim(),
+                  title: title.trim(),
+                  summary: summary.trim(),
+                  articleUrl: articleUrl.trim(),
+                  postId,
+                }),
+              });
+              const json = await res.json().catch(() => ({}));
+              if (!res.ok) {
+                setError(json.error ?? "Sending failed.");
+                push({ kind: "error", title: "Sending failed", body: json.error });
+                return;
+              }
+              setResult(json as SendResponse);
+              push({ kind: "success", title: `Newsletter sent to ${json.sent} subscribers.` });
+            } catch {
+              setError("Network error — nothing was sent.");
+              push({ kind: "error", title: "Network error", body: "Nothing was sent." });
+            } finally {
+              setBusy(null);
+            }
+          })();
+        }}
+      />
     </div>
   );
 }

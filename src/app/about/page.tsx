@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { SITE } from "@/lib/site";
 import { Reveal } from "@/components/reveal";
 import { NewsletterForm } from "@/components/newsletter-form";
@@ -19,17 +20,24 @@ function SectionTitle({ children }: { children: string }) {
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-3xl px-5 py-20 sm:px-8">
-      {/* Identity block — monogram stands in until a portrait is supplied */}
+      {/* Identity block — portrait slot; replace /covers/field-notes.png with a real portrait */}
       <Reveal>
         <p className="text-xs uppercase tracking-[0.25em] text-ink-4">About</p>
-        <div className="mt-6 flex items-start gap-6">
-          <div
-            aria-hidden
-            className="flex h-20 w-20 shrink-0 items-center justify-center border border-ink font-serif text-3xl text-ink"
-            style={{ borderRadius: 7 }}
-          >
-            FD
-          </div>
+        <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-start">
+          <figure className="shrink-0">
+            <span className="relative block h-40 w-32 overflow-hidden rounded border border-line bg-paper-2">
+              <Image
+                src={SITE.images.aboutPortrait.src}
+                alt={SITE.images.aboutPortrait.alt}
+                fill
+                sizes="128px"
+                className="object-cover"
+              />
+            </span>
+            <figcaption className="mt-2 max-w-32 text-[11px] leading-snug text-ink-4">
+              Portrait slot
+            </figcaption>
+          </figure>
           <div>
             <h1 className="font-serif text-4xl tracking-tight text-ink sm:text-5xl">
               {SITE.name}

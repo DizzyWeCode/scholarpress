@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import Link from "next/link";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useToast } from "@/components/toast";
 import type { Comment } from "@/lib/types";
 
 type CommentWithPost = Comment & {
@@ -72,9 +74,10 @@ export default function AdminCommentsPage() {
     setBusy(false);
   }
 
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const { push } = useToast();
+
   async function remove(id: string) {
-    if (!window.confirm("Permanently delete this comment and its replies? This cannot be undone."))
-      return;
     setBusy(true);
     setError(null);
     const { error: deleteError } = await getSupabaseBrowser()
@@ -84,7 +87,11 @@ export default function AdminCommentsPage() {
     if (deleteError) {
       console.error("delete comment failed", deleteError);
       setError("That comment could not be deleted. Please try again.");
+      push({ kind: "error", title: "Could not delete comment" });
+    } else {
+      push({ kind: "success", title: "Comment deleted." });
     }
+    setPendingDelete(null);
     await load();
     setBusy(false);
   }
@@ -186,7 +193,7 @@ export default function AdminCommentsPage() {
                   </button>
                 )}
                 <button
-                  onClick={() => void remove(comment.id)}
+                  onClick={() => setPendingDelete(comment.id)}
                   disabled={busy}
                   className="text-ink-3 underline underline-offset-2 hover:text-red-700 disabled:opacity-50"
                 >
@@ -197,6 +204,15 @@ export default function AdminCommentsPage() {
           ))
         )}
       </div>
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title="Delete this comment?"
+        body="This comment and its replies will be permanently removed. This cannot be undone."
+        confirmLabel="Delete comment"
+        danger
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => pendingDelete && void remove(pendingDelete)}
+      />
     </div>
   );
 }

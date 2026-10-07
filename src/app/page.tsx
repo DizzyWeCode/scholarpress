@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { SITE } from "@/lib/site";
 import { getSupabaseAnon } from "@/lib/supabase/public";
@@ -27,7 +28,7 @@ export default async function HomePage() {
     const [postsRes, papersRes, webinarsRes] = await Promise.all([
       supabase
         .from("posts")
-        .select("id, slug, title, excerpt, tags, status, published_at, reading_time_minutes, updated_at")
+        .select("id, slug, title, excerpt, tags, status, published_at, reading_time_minutes, updated_at, cover_image_url")
         .eq("status", "published")
         .order("published_at", { ascending: false })
         .limit(4),
@@ -55,7 +56,8 @@ export default async function HomePage() {
     <>
       {/* Hero — editorial masthead, ink on paper */}
       <section className="border-b border-line">
-        <div className="mx-auto max-w-6xl px-5 pb-24 pt-28 sm:px-8 sm:pt-36">
+        <div className="mx-auto grid max-w-6xl gap-10 px-5 pb-24 pt-28 sm:px-8 sm:pt-36 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
+          <div>
           <Reveal>
             <p className="text-xs uppercase tracking-[0.25em] text-ink-4">
               {SITE.affiliation}
@@ -87,6 +89,22 @@ export default async function HomePage() {
               </Link>
             </div>
           </Reveal>
+          </div>
+          <Reveal delay={200}>
+            <figure className="relative aspect-[4/3] overflow-hidden rounded border border-line bg-paper-2">
+              <Image
+                src={SITE.images.hero.src}
+                alt={SITE.images.hero.alt}
+                fill
+                sizes="(max-width: 1024px) 100vw, 480px"
+                className="object-cover"
+                priority
+              />
+            </figure>
+            <figcaption className="mt-2 text-xs text-ink-4">
+              Replace <code>/covers/field-notes.png</code> with a portrait or lab photo — see README image slots.
+            </figcaption>
+          </Reveal>
         </div>
       </section>
 
@@ -115,6 +133,17 @@ export default async function HomePage() {
               <p className="text-xs uppercase tracking-widest text-ink-4">
                 Featured essay
               </p>
+              {featured.cover_image_url ? (
+                <span className="relative mt-6 block aspect-[21/9] w-full overflow-hidden rounded bg-paper-2">
+                  <Image
+                    src={featured.cover_image_url}
+                    alt=""
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 1024px"
+                    className="object-cover"
+                  />
+                </span>
+              ) : null}
               <h3 className="mt-4 max-w-3xl font-serif text-3xl leading-tight tracking-tight text-ink transition-opacity group-hover:opacity-60 sm:text-5xl">
                 {featured.title}
               </h3>

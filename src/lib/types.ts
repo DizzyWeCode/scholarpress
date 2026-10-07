@@ -11,6 +11,10 @@ export interface Profile {
   email: string | null;
   full_name: string | null;
   avatar_url: string | null;
+  bio: string | null;
+  institution: string | null;
+  title: string | null;
+  newsletter_format: "all" | "essays" | "announcements" | "none";
   role: "owner" | "reader";
   created_at: string;
 }
@@ -93,6 +97,13 @@ export interface Comment {
   like_count: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface Bookmark {
+  user_id: string;
+  post_id: string;
+  created_at: string;
+  posts?: Pick<Post, "id" | "slug" | "title" | "excerpt" | "published_at" | "cover_image_url"> | null;
 }
 
 export interface PollOption {
