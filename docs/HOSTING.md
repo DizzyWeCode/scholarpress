@@ -1,4 +1,4 @@
-# Hosting ScholarPress for free
+# Hosting the site for free
 
 A complete, step-by-step guide to putting this site on the public internet without
 paying anything. Everything below is on a **free tier**: Supabase (database + auth),
@@ -73,7 +73,7 @@ the alternative section covers Netlify if Vercel's non-commercial clause matters
 ```bash
 cd scholarpress
 git add -A
-git commit -m "Initial ScholarPress site"
+git commit -m "Initial site"
 git branch -M main
 git remote add origin https://github.com/<you>/scholarpress.git   # if not set already
 git push -u origin main

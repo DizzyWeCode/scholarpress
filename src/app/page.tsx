@@ -27,19 +27,19 @@ export default async function HomePage() {
     const [postsRes, papersRes, webinarsRes] = await Promise.all([
       supabase
         .from("posts")
-        .select("*")
+        .select("id, slug, title, excerpt, tags, status, published_at, reading_time_minutes, updated_at")
         .eq("status", "published")
         .order("published_at", { ascending: false })
         .limit(4),
       supabase
         .from("papers")
-        .select("*")
+        .select("id, title, abstract, authors, venue, year, doi, url, pdf_url, tags, featured, status, created_at")
         .eq("status", "published")
         .order("year", { ascending: false })
         .limit(3),
       supabase
         .from("webinars")
-        .select("*")
+        .select("id, title, description, starts_at, duration_minutes, platform, registration_url, recording_url, status, created_at")
         .eq("status", "upcoming")
         .order("starts_at", { ascending: true })
         .limit(3),
@@ -90,18 +90,18 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Featured article + recent writing */}
+      {/* Featured article + recent articles */}
       <section className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
         <Reveal>
           <div className="flex items-baseline justify-between">
             <h2 className="text-xs uppercase tracking-[0.25em] text-ink-4">
-              Writing
+              Articles
             </h2>
             <Link
               href="/blog"
               className="inline-flex items-center gap-1.5 text-sm text-ink-3 transition-colors hover:text-ink"
             >
-              All writing <ArrowRight className="h-3.5 w-3.5" />
+              All articles <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         </Reveal>

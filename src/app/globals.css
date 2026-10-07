@@ -4,6 +4,8 @@
 
 :root {
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  /* --font-inter / --font-newsreader are injected by next/font/local
+     (see app/layout.tsx) — self-hosted woff2, no third-party requests. */
 }
 
 html {

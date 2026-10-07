@@ -4,7 +4,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { getSupabaseAnon } from "@/lib/supabase/public";
-import { requireSignedIn } from "@/lib/auth";
 import { ArticleBody } from "@/components/article-body";
 import { ReferenceList } from "@/components/reference-list";
 import { ShareButtons } from "@/components/share-buttons";
@@ -15,7 +14,7 @@ import { SITE, absoluteUrl } from "@/lib/site";
 import { excerptFromDoc } from "@/lib/utils";
 import type { Post } from "@/lib/types";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 async function getPost(slug: string): Promise<Post | null> {
   const supabase = getSupabaseAnon();
@@ -63,7 +62,6 @@ export default async function ArticlePage({
 }: {
   params: { slug: string };
 }) {
-  await requireSignedIn(`/blog/${params.slug}`);
   const post = await getPost(params.slug);
   if (!post) notFound();
 
@@ -91,7 +89,7 @@ export default async function ArticlePage({
           href="/blog"
           className="text-xs uppercase tracking-widest text-ink-4 transition-colors hover:text-ink"
         >
-          ← All writing
+          ← All articles
         </Link>
         <h1 className="mt-6 font-serif text-4xl leading-[1.12] tracking-[-0.015em] text-ink sm:text-5xl">
           {post.title}

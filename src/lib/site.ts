@@ -3,10 +3,10 @@
  */
 export const SITE = {
   name: "Dr Fraction Dzinjalamala",
-  tagline: "Clinical pharmacologist working to outsmart drug-resistant malaria",
-  siteTitle: "Fraction Dzinjalamala — Research, Writing & Webinars",
+  tagline: "Clinical pharmacology for better malaria treatment",
+  siteTitle: "Fraction Dzinjalamala — Research, Articles & Webinars",
   description:
-    "The academic home of Dr Fraction Dzinjalamala: malaria chemotherapy, antimicrobial drug resistance, and clinical pharmacology — research, writing, and public webinars from Malawi.",
+    "The academic home of Dr Fraction Dzinjalamala: research, articles, and public conversation about antimalarial medicines, drug resistance, and clinical pharmacology from Malawi.",
   affiliation: "Department of Clinical Sciences, MUST",
   email: "fdzinjalamala@must.ac.mw",
   // Optional scholarly profiles — leave empty to hide
@@ -15,9 +15,11 @@ export const SITE = {
   researchgate: "https://www.researchgate.net/profile/Fraction-Dzinjalamala",
   twitter: "",
   linkedin: "",
-  // Footer attribution note for third-party imagery used across the site
+  // Studio credit shown in the footer — leave url empty to render as plain text
+  builtBy: { name: "Akodi Ltd", url: "" },
+  // Footer attribution note for imagery used across the site
   imageAttributionNote:
-    "Unless otherwise credited alongside an image, photography on this site is from Unsplash and used under the Unsplash License.",
+    "Images and illustrations on this site are original unless credited alongside the image.",
 } as const;
 
 export function absoluteUrl(path = ""): string {

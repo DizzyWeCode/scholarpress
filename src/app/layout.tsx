@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Newsreader } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { SITE, absoluteUrl } from "@/lib/site";
 import { SiteHeader } from "@/components/site-header";
@@ -7,17 +7,21 @@ import { SiteFooter } from "@/components/site-footer";
 import { CookieBanner } from "@/components/cookie-banner";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
+// Self-hosted variable subsets (latin) from Google Fonts — Inter & Newsreader,
+// SIL Open Font License. Regenerate: see scripts/ in the repo root.
+const inter = localFont({
+  src: [{ path: "../fonts/inter-latin.woff2", weight: "400 600", style: "normal" }],
   display: "swap",
+  variable: "--font-inter",
 });
 
-const newsreader = Newsreader({
-  subsets: ["latin"],
-  variable: "--font-newsreader",
+const newsreader = localFont({
+  src: [
+    { path: "../fonts/newsreader-latin.woff2", weight: "400 600", style: "normal" },
+    { path: "../fonts/newsreader-latin-italic.woff2", weight: "400", style: "italic" },
+  ],
   display: "swap",
-  style: ["normal", "italic"],
+  variable: "--font-newsreader",
 });
 
 export const metadata: Metadata = {
@@ -30,6 +34,11 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: SITE.siteTitle,
+    title: SITE.siteTitle,
+    description: SITE.description,
+  },
+  twitter: {
+    card: "summary_large_image",
     title: SITE.siteTitle,
     description: SITE.description,
   },

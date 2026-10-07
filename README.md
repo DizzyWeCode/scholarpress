@@ -1,6 +1,6 @@
-# ScholarPress
+# Dr Fraction Dzinjalamala — academic site
 
-A personal academic publishing platform: research papers, long-form writing,
+A personal academic publishing platform: research papers, long-form articles,
 webinar announcements, newsletter subscriptions, and readership analytics —
 behind a medium-to-advanced content management studio.
 
@@ -168,7 +168,7 @@ supabase/
 
 ## Licensing note on images
 
-Sample content uses Unsplash photography under the
-[Unsplash License](https://unsplash.com/license) with per-image credits.
-Replace with your own imagery, and always fill the credit fields in the
-editor when using third-party images.
+Sample content uses generated cover art in `public/covers/`
+(see `scripts/generate-brand-assets.py`) — no third-party imagery ships
+with the site. When you add your own images, always fill the credit
+fields in the editor for anything you did not create.
