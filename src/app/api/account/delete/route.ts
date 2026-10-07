@@ -6,7 +6,15 @@ export async function POST() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
 
-  const admin = getSupabaseAdmin();
+  let admin: ReturnType<typeof getSupabaseAdmin>;
+  try {
+    admin = getSupabaseAdmin();
+  } catch {
+    return NextResponse.json(
+      { error: "Account deletion is not configured on this deployment." },
+      { status: 503 },
+    );
+  }
   const { error: subscriberError } = await admin
     .from("subscribers")
     .delete()

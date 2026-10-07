@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
@@ -24,6 +25,8 @@ import {
   Undo2,
   Redo2,
 } from "lucide-react";
+import { getSupabaseBrowser } from "@/lib/supabase/client";
+import { uploadPublicImage } from "@/lib/uploads/media";
 
 /**
  * Block-style rich text editor (TipTap).
@@ -58,6 +61,9 @@ function ToolbarButton({
 
 function Toolbar({ editor }: { editor: Editor }) {
   const s = "h-4 w-4";
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   function setLink() {
     const previous = editor.getAttributes("link").href as string | undefined;
@@ -70,17 +76,43 @@ function Toolbar({ editor }: { editor: Editor }) {
     editor.chain().focus().setLink({ href: url }).run();
   }
 
-  function addImage() {
+  function addImageUrl() {
     const url = window.prompt("Image URL (https://…):");
     if (!url) return;
     const credit = window.prompt(
-      "Image credit / attribution (shown as caption, e.g. “Photo by Jane Doe on Unsplash”):",
+      "Image credit / attribution (shown as caption, e.g. “Photo by Jane Doe”):",
     );
     editor
       .chain()
       .focus()
       .setImage({ src: url, alt: credit ?? "", title: credit ?? "" })
       .run();
+  }
+
+  async function addImageFile(file: File | undefined) {
+    if (!file || uploading) return;
+    setUploading(true);
+    setUploadError("");
+    try {
+      const publicUrl = await uploadPublicImage({
+        supabase: getSupabaseBrowser(),
+        file,
+        folder: "posts/body",
+      });
+      const credit = window.prompt(
+        "Image credit / attribution (optional, shown as caption):",
+      );
+      editor
+        .chain()
+        .focus()
+        .setImage({ src: publicUrl, alt: credit ?? "", title: credit ?? "" })
+        .run();
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Upload failed.");
+    } finally {
+      setUploading(false);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    }
   }
 
   return (
@@ -127,9 +159,28 @@ function Toolbar({ editor }: { editor: Editor }) {
       <ToolbarButton onClick={setLink} active={editor.isActive("link")} label="Link">
         <LinkIcon className={s} />
       </ToolbarButton>
-      <ToolbarButton onClick={addImage} label="Image (with attribution)">
+      <ToolbarButton
+        onClick={() => imageInputRef.current?.click()}
+        label={uploading ? "Uploading image" : "Upload image"}
+      >
         <ImageIcon className={s} />
       </ToolbarButton>
+      <button
+        type="button"
+        onClick={addImageUrl}
+        className="rounded px-2 py-1.5 text-xs text-ink-3 transition-colors hover:bg-paper-2 hover:text-ink"
+      >
+        URL
+      </button>
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        className="sr-only"
+        onChange={(e) => addImageFile(e.target.files?.[0])}
+      />
+      {uploading ? <span className="px-2 text-xs text-ink-4">Uploading…</span> : null}
+      {uploadError ? <span className="px-2 text-xs text-red-700">{uploadError}</span> : null}
       <span className="mx-2 h-5 w-px bg-line" />
       <ToolbarButton onClick={() => editor.chain().focus().undo().run()} label="Undo">
         <Undo2 className={s} />
@@ -148,6 +199,14 @@ export function RichEditor({
   initialContent: Record<string, unknown> | null;
   onChange: (json: Record<string, unknown>) => void;
 }) {
+  const onChangeRef = useRef(onChange);
+  const pendingJsonRef = useRef<Record<string, unknown> | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [2, 3] } }),
@@ -161,11 +220,37 @@ export function RichEditor({
     content: initialContent ?? undefined,
     editorProps: {
       attributes: { class: "tiptap article-body py-6" },
+      handleDOMEvents: {
+        blur: (_view, event) => {
+          const target = event.currentTarget as HTMLElement | null;
+          const editorElement = target?.querySelector(".ProseMirror");
+          if (editorElement && pendingJsonRef.current) {
+            onChangeRef.current(pendingJsonRef.current);
+            pendingJsonRef.current = null;
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+          }
+          return false;
+        },
+      },
     },
     onUpdate: ({ editor }) => {
-      onChange(editor.getJSON() as Record<string, unknown>);
+      pendingJsonRef.current = editor.getJSON() as Record<string, unknown>;
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        if (pendingJsonRef.current) onChangeRef.current(pendingJsonRef.current);
+        pendingJsonRef.current = null;
+        timeoutRef.current = null;
+      }, 350);
     },
   });
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (pendingJsonRef.current) onChangeRef.current(pendingJsonRef.current);
+    };
+  }, []);
 
   if (!editor) return null;
 

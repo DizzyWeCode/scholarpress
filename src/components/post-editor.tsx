@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import { RichEditor } from "@/components/rich-editor";
 import { readingTimeFromDoc, slugify } from "@/lib/utils";
+import { uploadPublicImage } from "@/lib/uploads/media";
 import type { Post, ReferenceItem, PostStatus } from "@/lib/types";
-import { Plus, Trash2 } from "lucide-react";
+import { ImagePlus, Plus, Trash2 } from "lucide-react";
 
 const inputCls =
   "w-full border-0 border-b border-line bg-transparent px-0 py-2 text-sm text-ink outline-none transition-colors placeholder:text-ink-4 focus:border-ink";
@@ -33,7 +34,28 @@ export function PostEditor({ post }: { post?: Post }) {
     post?.references ?? [],
   );
   const [saving, setSaving] = useState<PostStatus | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
   const [message, setMessage] = useState("");
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
+  async function uploadCover(file: File | undefined) {
+    if (!file || coverUploading) return;
+    setCoverUploading(true);
+    setMessage("");
+    try {
+      const publicUrl = await uploadPublicImage({
+        supabase: getSupabaseBrowser(),
+        file,
+        folder: "posts/covers",
+      });
+      setCoverUrl(publicUrl);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Cover upload failed.");
+    } finally {
+      setCoverUploading(false);
+      if (coverInputRef.current) coverInputRef.current.value = "";
+    }
+  }
 
   async function save(status: PostStatus) {
     if (!title.trim()) {
@@ -169,16 +191,34 @@ export function PostEditor({ post }: { post?: Post }) {
         <div className="grid gap-6">
           <div>
             <label className={labelCls} htmlFor="pe-cover">Image URL</label>
-            <input id="pe-cover" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://images.unsplash.com/…" className={`${inputCls} mt-2`} />
+            <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end">
+              <input id="pe-cover" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://…" className={inputCls} />
+              <button
+                type="button"
+                onClick={() => coverInputRef.current?.click()}
+                disabled={coverUploading}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-line px-4 py-2 text-sm text-ink-3 transition-colors hover:border-ink hover:text-ink disabled:opacity-40"
+              >
+                <ImagePlus className="h-4 w-4" />
+                {coverUploading ? "Uploading…" : "Upload"}
+              </button>
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(e) => uploadCover(e.target.files?.[0])}
+              />
+            </div>
           </div>
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
-              <label className={labelCls} htmlFor="pe-credit">Credit (e.g. “Photo by Jane Doe on Unsplash”)</label>
+              <label className={labelCls} htmlFor="pe-credit">Credit (e.g. “Photo by Jane Doe”)</label>
               <input id="pe-credit" value={coverCredit} onChange={(e) => setCoverCredit(e.target.value)} className={`${inputCls} mt-2`} />
             </div>
             <div>
               <label className={labelCls} htmlFor="pe-credit-url">Credit link</label>
-              <input id="pe-credit-url" value={coverCreditUrl} onChange={(e) => setCoverCreditUrl(e.target.value)} placeholder="https://unsplash.com/photos/…" className={`${inputCls} mt-2`} />
+              <input id="pe-credit-url" value={coverCreditUrl} onChange={(e) => setCoverCreditUrl(e.target.value)} placeholder="https://…" className={`${inputCls} mt-2`} />
             </div>
           </div>
         </div>
