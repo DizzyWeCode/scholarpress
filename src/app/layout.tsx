@@ -31,6 +31,11 @@ export const metadata: Metadata = {
     template: `%s — ${SITE.name}`,
   },
   description: SITE.description,
+  // "./" resolves to the current path → every route self-canonicalises
+  // against metadataBase (avoids duplicate-content between hosts/paths).
+  alternates: {
+    canonical: "./",
+  },
   openGraph: {
     type: "website",
     siteName: SITE.siteTitle,
