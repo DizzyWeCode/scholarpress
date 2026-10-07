@@ -76,3 +76,27 @@ alter default privileges in schema public
   grant all on tables to anon, authenticated, service_role;
 alter default privileges in schema public
   grant usage, select on sequences to anon, authenticated, service_role;
+
+-- ---------- storage schema ----------
+-- supabase/schema.sql provisions the public `media` bucket and creates
+-- policies on storage.objects. A plain Postgres container has neither.
+create schema if not exists storage;
+
+create table if not exists storage.buckets (
+  id text primary key,
+  name text not null,
+  public boolean not null default false,
+  file_size_limit bigint,
+  allowed_mime_types text[]
+);
+
+create table if not exists storage.objects (
+  id uuid primary key default gen_random_uuid(),
+  bucket_id text references storage.buckets(id) on delete cascade,
+  name text,
+  owner uuid,
+  created_at timestamptz not null default now()
+);
+
+grant usage on schema storage to anon, authenticated, service_role;
+grant all on storage.buckets, storage.objects to anon, authenticated, service_role;

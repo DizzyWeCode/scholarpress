@@ -111,3 +111,36 @@ export interface Poll {
   allow_results_before_vote: boolean;
   poll_options: PollOption[];
 }
+
+export type EmailPurpose =
+  | "welcome"
+  | "newsletter"
+  | "webinar_announcement"
+  | "webinar_reminder";
+
+export type EmailStatus =
+  | "queued"
+  | "sent"
+  | "delivered"
+  | "opened"
+  | "clicked"
+  | "bounced"
+  | "failed";
+
+export interface EmailSend {
+  id: string;
+  purpose: EmailPurpose;
+  recipient_email: string;
+  subject: string | null;
+  post_id: string | null;
+  webinar_id: string | null;
+  resend_email_id: string | null;
+  status: EmailStatus;
+  error_message: string | null;
+  sent_at: string | null;
+  delivered_at: string | null;
+  opened_at: string | null;
+  clicked_at: string | null;
+  bounced_at: string | null;
+  created_at: string;
+}

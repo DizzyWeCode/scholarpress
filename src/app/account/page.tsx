@@ -27,6 +27,8 @@ export default function AccountPage() {
       setName(profile?.full_name ?? data.user.user_metadata?.full_name ?? "");
       setSubscribed(Boolean(sub));
       setLoading(false);
+      // Fire-once welcome email (the endpoint is idempotent).
+      fetch("/api/account/welcome", { method: "POST" }).catch(() => undefined);
     });
   }, [router]);
 

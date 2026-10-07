@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import type { Webinar } from "@/lib/types";
-import { Plus, Trash2, X } from "lucide-react";
+import { Mail, Plus, Trash2, X } from "lucide-react";
 
 const inputCls =
   "w-full border-0 border-b border-line bg-transparent px-0 py-2 text-sm text-ink outline-none transition-colors placeholder:text-ink-4 focus:border-ink";
@@ -14,6 +14,8 @@ export default function AdminWebinarsPage() {
   const [webinars, setWebinars] = useState<Webinar[] | null>(null);
   const [editing, setEditing] = useState<Webinar | null>(null);
   const [creating, setCreating] = useState(false);
+  const [announcing, setAnnouncing] = useState<Webinar | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   async function load() {
     const { data } = await getSupabaseBrowser()
@@ -40,9 +42,13 @@ export default function AdminWebinarsPage() {
           onClick={() => setCreating(true)}
           className="inline-flex items-center gap-1.5 rounded-full bg-ink px-5 py-2 text-sm text-paper transition-opacity hover:opacity-80"
         >
-          <Plus className="h-4 w-4" /> Announce webinar
+          <Plus className="h-4 w-4" /> New webinar
         </button>
       </div>
+
+      {notice && (
+        <p className="mt-4 border-t border-line pt-4 text-sm text-ink-3">{notice}</p>
+      )}
 
       <div className="mt-8">
         {webinars === null ? (
@@ -69,17 +75,41 @@ export default function AdminWebinarsPage() {
               <span className="text-xs text-ink-4">
                 {format(new Date(w.starts_at), "dd MMM yyyy, HH:mm")}
               </span>
-              <button
-                onClick={() => remove(w.id)}
-                className="justify-self-start p-1 text-ink-4 transition-colors hover:text-red-700 sm:justify-self-end"
-                aria-label={`Delete ${w.title}`}
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-2 justify-self-start sm:justify-self-end">
+                <button
+                  onClick={() => {
+                    setNotice(null);
+                    setAnnouncing(w);
+                  }}
+                  className="justify-self-start p-1 text-ink-4 transition-colors hover:text-ink sm:justify-self-end"
+                  aria-label={`Email announcement for ${w.title}`}
+                  title="Email announcement"
+                >
+                  <Mail className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => remove(w.id)}
+                  className="justify-self-start p-1 text-ink-4 transition-colors hover:text-red-700 sm:justify-self-end"
+                  aria-label={`Delete ${w.title}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           ))
         )}
       </div>
+
+      {announcing && (
+        <AnnounceDialog
+          webinar={announcing}
+          onClose={() => setAnnouncing(null)}
+          onDone={(message) => {
+            setAnnouncing(null);
+            setNotice(message);
+          }}
+        />
+      )}
 
       {(creating || editing) && (
         <WebinarForm
@@ -95,6 +125,116 @@ export default function AdminWebinarsPage() {
           }}
         />
       )}
+    </div>
+  );
+}
+
+function AnnounceDialog({
+  webinar,
+  onClose,
+  onDone,
+}: {
+  webinar: Webinar;
+  onClose: () => void;
+  onDone: (message: string) => void;
+}) {
+  const [testEmail, setTestEmail] = useState("");
+  const [busy, setBusy] = useState<"test" | "all" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function send(mode: "test" | "all") {
+    if (mode === "all" && !window.confirm(
+      `Send the "${webinar.title}" announcement to ALL subscribers?`,
+    )) return;
+    if (mode === "test" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail.trim())) {
+      setError("Enter a valid test email address.");
+      return;
+    }
+    setBusy(mode);
+    setError(null);
+    try {
+      const response = await fetch("/api/admin/webinars/announce", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          webinarId: webinar.id,
+          mode,
+          testEmail: testEmail.trim(),
+        }),
+      });
+      const result = (await response.json()) as {
+        error?: string;
+        sent?: number;
+        failed?: number;
+        skipped?: number;
+        errors?: string[];
+      };
+      if (!response.ok) {
+        setError(result.error ?? `Request failed (${response.status}).`);
+        return;
+      }
+      const parts = [`sent ${result.sent ?? 0}`];
+      if (result.failed) parts.push(`${result.failed} failed`);
+      if (result.skipped) parts.push(`${result.skipped} skipped (already sent)`);
+      const detail = result.errors?.length ? ` — ${result.errors[0]}` : "";
+      onDone(`Announcement (${mode}): ${parts.join(", ")}${detail}`);
+    } catch {
+      setError("Request failed — is the server running?");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/40 p-4" onClick={onClose}>
+      <div
+        className="mx-auto my-10 max-w-md bg-paper p-8"
+        style={{ borderRadius: 7 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="font-serif text-2xl tracking-tight text-ink">Email announcement</h2>
+          <button onClick={onClose} aria-label="Close" className="p-1 text-ink-4 hover:text-ink">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <p className="mt-3 text-sm text-ink-3">
+          {webinar.title} — {format(new Date(webinar.starts_at), "dd MMM yyyy, HH:mm")}
+        </p>
+        {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
+        <div className="mt-6 grid gap-4">
+          <div>
+            <label className={labelCls}>Send a test to</label>
+            <input
+              type="email"
+              value={testEmail}
+              onChange={(e) => setTestEmail(e.target.value)}
+              placeholder="you@example.com"
+              className={`${inputCls} mt-2`}
+            />
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => send("test")}
+              disabled={busy !== null}
+              className="rounded-full border border-line px-5 py-2.5 text-sm text-ink-3 transition-colors hover:text-ink disabled:opacity-40"
+            >
+              {busy === "test" ? "Sending…" : "Send test"}
+            </button>
+            <button
+              onClick={() => send("all")}
+              disabled={busy !== null}
+              className="rounded-full bg-ink px-5 py-2.5 text-sm text-paper transition-opacity hover:opacity-80 disabled:opacity-40"
+            >
+              {busy === "all" ? "Sending…" : "Send to all subscribers"}
+            </button>
+          </div>
+          <p className="text-xs text-ink-4">
+            Recipients who already received this announcement are skipped.
+            Reminders go out automatically 24 hours before the start.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

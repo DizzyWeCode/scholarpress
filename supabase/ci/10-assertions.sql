@@ -14,7 +14,7 @@ begin
   foreach tbl in array array[
     'profiles', 'posts', 'papers', 'webinars', 'subscribers', 'page_views',
     'comments', 'comment_likes', 'post_likes', 'polls', 'poll_options',
-    'poll_votes'
+    'poll_votes', 'email_sends', 'webinar_registrations'
   ] loop
     if to_regclass('public.' || tbl) is null then
       missing := missing || tbl;
@@ -24,7 +24,7 @@ begin
   if array_length(missing, 1) is not null then
     raise exception 'Missing tables: %', array_to_string(missing, ', ');
   end if;
-  raise notice 'OK — all 12 tables present';
+  raise notice 'OK — all 14 tables present';
 end
 $$;
 
@@ -37,7 +37,7 @@ begin
   foreach tbl in array array[
     'profiles', 'posts', 'papers', 'webinars', 'subscribers', 'page_views',
     'comments', 'comment_likes', 'post_likes', 'polls', 'poll_options',
-    'poll_votes'
+    'poll_votes', 'email_sends', 'webinar_registrations'
   ] loop
     if not exists (
       select 1
@@ -52,7 +52,7 @@ begin
   if array_length(bad, 1) is not null then
     raise exception 'Row Level Security not enabled on: %', array_to_string(bad, ', ');
   end if;
-  raise notice 'OK — RLS enabled on all 12 tables';
+  raise notice 'OK — RLS enabled on all 14 tables';
 end
 $$;
 
@@ -93,7 +93,11 @@ begin
       ('poll_options','poll_options_owner_write'),
       ('poll_votes',  'poll_votes_read_own'),
       ('poll_votes',  'poll_votes_insert_own'),
-      ('poll_votes',  'poll_votes_update_own')
+      ('poll_votes',  'poll_votes_update_own'),
+      ('email_sends', 'email_sends_owner_read'),
+      ('email_sends', 'email_sends_owner_write'),
+      ('webinar_registrations', 'webinar_registrations_owner_read'),
+      ('webinar_registrations', 'webinar_registrations_owner_write')
     ) as expected(tab, name)
   loop
     if not exists (
@@ -107,7 +111,7 @@ begin
   if array_length(missing, 1) is not null then
     raise exception 'Missing RLS policies: %', array_to_string(missing, ', ');
   end if;
-  raise notice 'OK — all 30 RLS policies present';
+  raise notice 'OK — all 34 RLS policies present';
 end
 $$;
 
@@ -260,6 +264,16 @@ begin
   select count(*) into n from public.page_views;
   if n <> 0 then
     raise exception 'RLS leak: anon could read % page_view rows', n;
+  end if;
+
+  select count(*) into n from public.email_sends;
+  if n <> 0 then
+    raise exception 'RLS leak: anon could read % email_send rows', n;
+  end if;
+
+  select count(*) into n from public.webinar_registrations;
+  if n <> 0 then
+    raise exception 'RLS leak: anon could read % webinar_registration rows', n;
   end if;
 
   if exists (select 1 from public.posts where id = draft_id) then

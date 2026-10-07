@@ -1,7 +1,7 @@
 -- ============================================================
--- ScholarPress — sample content (optional)
+-- Sample content (optional)
 -- Run AFTER supabase/schema.sql. Safe to delete/modify freely.
--- Images: Unsplash, credited per the Unsplash License.
+-- Covers: generated brand art in public/covers/ (no third-party images).
 -- ============================================================
 
 insert into public.posts (
@@ -41,9 +41,9 @@ insert into public.posts (
       ]}
     ]
   }'::jsonb,
-  'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1600&q=80',
-  'Photo by 🇸🇮 Janko Ferlič on Unsplash',
-  'https://unsplash.com/@itfeelslikefilm',
+  '/covers/open-access.png',
+  null,
+  null,
   array['open access', 'scholarly communication', 'policy'],
   'published',
   now() - interval '6 days',
@@ -82,9 +82,9 @@ insert into public.posts (
       ]}
     ]
   }'::jsonb,
-  'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=1600&q=80',
-  'Photo by Aaron Burden on Unsplash',
-  'https://unsplash.com/@aaronburden',
+  '/covers/field-notes.png',
+  null,
+  null,
   array['open science', 'methods', 'notes'],
   'published',
   now() - interval '2 days',
