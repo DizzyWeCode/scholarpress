@@ -5,13 +5,15 @@ import type { Webinar } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-/** Vercel cron: hourly reminder pass for webinars starting within 24 hours.
+/** Vercel cron: daily reminder pass (00:00 UTC — Hobby plans only allow
+ *  once-per-day schedules) for webinars starting within 48 hours. The wider
+ *  window keeps reminders landing ~24–48h before start despite the daily cadence.
  *  Authenticated with `Authorization: Bearer ${CRON_SECRET}` (Vercel adds this
  *  header automatically for cron invocations when CRON_SECRET is set).
  *  Idempotency: recipients already recorded in email_sends for
  *  (purpose = webinar_reminder, webinar_id) are skipped, plus Resend's
  *  Idempotency-Key dedupe as a fallback when the service role key is absent. */
-const REMINDER_WINDOW_HOURS = 24;
+const REMINDER_WINDOW_HOURS = 48;
 
 function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;

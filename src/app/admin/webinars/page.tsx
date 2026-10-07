@@ -231,7 +231,8 @@ function AnnounceDialog({
           </div>
           <p className="text-xs text-ink-4">
             Recipients who already received this announcement are skipped.
-            Reminders go out automatically 24 hours before the start.
+            Reminders go out automatically in a daily pass, roughly 24–48 hours
+            before the start.
           </p>
         </div>
       </div>
