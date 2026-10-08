@@ -98,5 +98,17 @@ create table if not exists storage.objects (
   created_at timestamptz not null default now()
 );
 
+-- Supabase Storage exposes this helper for object-path RLS policies.
+-- Keep the CI shim's behavior equivalent for the path checks used here:
+-- `user-id/avatar.png` becomes `{user-id,avatar.png}`.
+create or replace function storage.foldername(object_name text)
+returns text[]
+language sql
+immutable
+strict
+as $$
+  select string_to_array(object_name, '/');
+$$;
+
 grant usage on schema storage to anon, authenticated, service_role;
 grant all on storage.buckets, storage.objects to anon, authenticated, service_role;
