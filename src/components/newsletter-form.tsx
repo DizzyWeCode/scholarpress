@@ -30,7 +30,7 @@ export function NewsletterForm({ dark = false }: { dark?: boolean }) {
         role="status"
         className={dark ? "text-sm text-paper/70" : "text-sm text-ink-2"}
       >
-        You&rsquo;re on the list — thank you. New writing and webinar
+        You&rsquo;re on the list — thank you. New articles and webinar
         announcements will reach your inbox.
       </p>
     );

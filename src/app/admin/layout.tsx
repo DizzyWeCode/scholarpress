@@ -6,7 +6,11 @@ import {
   FileText,
   BookOpen,
   MonitorPlay,
+  MessageSquare,
   Users,
+  Vote,
+  Mail,
+  Send,
   BarChart3,
   Settings,
 } from "lucide-react";
@@ -18,7 +22,11 @@ const NAV = [
   { href: "/admin/posts", label: "Posts", icon: FileText },
   { href: "/admin/papers", label: "Papers", icon: BookOpen },
   { href: "/admin/webinars", label: "Webinars", icon: MonitorPlay },
+  { href: "/admin/comments", label: "Comments", icon: MessageSquare },
+  { href: "/admin/polls", label: "Polls", icon: Vote },
   { href: "/admin/subscribers", label: "Subscribers", icon: Users },
+  { href: "/admin/newsletter", label: "Newsletter", icon: Send },
+  { href: "/admin/email", label: "Email log", icon: Mail },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];

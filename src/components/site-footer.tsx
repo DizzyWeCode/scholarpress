@@ -20,7 +20,7 @@ export function SiteFooter() {
               Explore
             </p>
             <ul className="mt-4 space-y-2.5 text-sm">
-              <li><Link className="text-paper/70 transition-colors hover:text-paper" href="/blog">Writing</Link></li>
+              <li><Link className="text-paper/70 transition-colors hover:text-paper" href="/blog">Articles</Link></li>
               <li><Link className="text-paper/70 transition-colors hover:text-paper" href="/papers">Research papers</Link></li>
               <li><Link className="text-paper/70 transition-colors hover:text-paper" href="/webinars">Webinars</Link></li>
               <li><Link className="text-paper/70 transition-colors hover:text-paper" href="/about">About</Link></li>
@@ -39,7 +39,21 @@ export function SiteFooter() {
         </div>
         <div className="mt-14 flex flex-col gap-2 border-t border-paper/15 pt-6 text-xs text-paper/60 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} {SITE.name}. All rights reserved.</p>
-          <p>Built with Next.js &amp; Supabase — open-source, free to host.</p>
+          <p>
+            Site by{" "}
+            {SITE.builtBy.url ? (
+              <a
+                href={SITE.builtBy.url}
+                className="underline underline-offset-2 transition-colors hover:text-paper"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                {SITE.builtBy.name}
+              </a>
+            ) : (
+              SITE.builtBy.name
+            )}
+          </p>
         </div>
       </div>
     </footer>

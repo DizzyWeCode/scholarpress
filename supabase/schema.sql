@@ -1,5 +1,5 @@
 -- ============================================================
--- ScholarPress — Supabase schema
+-- Supabase schema
 -- Run in: Supabase Dashboard -> SQL Editor -> New query -> paste -> Run
 -- ============================================================
 
@@ -63,7 +63,7 @@ create table if not exists public.posts (
   excerpt text,
   content jsonb,                       -- TipTap JSON document
   cover_image_url text,
-  cover_image_credit text,             -- e.g. "Photo by Jane Doe on Unsplash"
+  cover_image_credit text,             -- e.g. "Photo by Jane Doe"
   cover_image_credit_url text,         -- link to the image source
   tags text[] not null default '{}',
   status text not null default 'draft' check (status in ('draft', 'published', 'scheduled')),
@@ -80,6 +80,10 @@ create table if not exists public.posts (
 
 alter table public.posts
   add column if not exists like_count int not null default 0;
+
+create index if not exists posts_published_at_idx
+  on public.posts (published_at desc)
+  where status = 'published';
 
 -- ---------- Research papers ----------
 create table if not exists public.papers (
@@ -98,6 +102,10 @@ create table if not exists public.papers (
   created_at timestamptz not null default now()
 );
 
+create index if not exists papers_published_year_idx
+  on public.papers (year desc)
+  where status = 'published';
+
 -- ---------- Webinars ----------
 create table if not exists public.webinars (
   id uuid primary key default gen_random_uuid(),
@@ -111,6 +119,10 @@ create table if not exists public.webinars (
   status text not null default 'upcoming' check (status in ('upcoming', 'past', 'draft')),
   created_at timestamptz not null default now()
 );
+
+create index if not exists webinars_upcoming_starts_idx
+  on public.webinars (starts_at)
+  where status = 'upcoming';
 
 -- ---------- Newsletter subscribers ----------
 create table if not exists public.subscribers (
@@ -192,6 +204,68 @@ create table if not exists public.poll_votes (
   created_at timestamptz not null default now(),
   primary key (poll_id, user_id)
 );
+
+-- ---------- Email delivery tracking (written by the app, updated by the
+-- Resend webhook: delivered / opened / clicked / bounced) ----------
+create table if not exists public.email_sends (
+  id uuid primary key default gen_random_uuid(),
+  purpose text not null check (purpose in ('welcome', 'newsletter', 'webinar_announcement', 'webinar_reminder')),
+  recipient_email text not null,
+  subject text,
+  post_id uuid references public.posts(id) on delete set null,
+  webinar_id uuid references public.webinars(id) on delete set null,
+  resend_email_id text unique,            -- Resend's email id, set on accepted send
+  status text not null default 'queued'
+    check (status in ('queued', 'sent', 'delivered', 'opened', 'clicked', 'bounced', 'failed')),
+  error_message text,                     -- populated when status = 'failed'
+  sent_at timestamptz,
+  delivered_at timestamptz,
+  opened_at timestamptz,
+  clicked_at timestamptz,
+  bounced_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists email_sends_purpose_sent_idx
+  on public.email_sends (purpose, sent_at desc);
+create index if not exists email_sends_status_idx
+  on public.email_sends (status);
+create index if not exists email_sends_post_idx
+  on public.email_sends (post_id) where post_id is not null;
+create index if not exists email_sends_webinar_idx
+  on public.email_sends (webinar_id) where webinar_id is not null;
+create index if not exists email_sends_recipient_purpose_idx
+  on public.email_sends (recipient_email, purpose);
+
+-- ---------- Webinar registrations (reserved for a future in-app
+-- registration flow; nothing reads or writes it from the app yet) ----------
+create table if not exists public.webinar_registrations (
+  id uuid primary key default gen_random_uuid(),
+  webinar_id uuid not null references public.webinars(id) on delete cascade,
+  email text not null,
+  user_id uuid references auth.users(id) on delete set null,
+  reminder_sent_at timestamptz,
+  created_at timestamptz not null default now(),
+  unique (webinar_id, email)
+);
+
+create index if not exists webinar_registrations_webinar_idx
+  on public.webinar_registrations (webinar_id);
+
+-- ---------- Public media uploads ----------
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'media',
+  'media',
+  true,
+  8388608,
+  array['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+)
+on conflict (id) do update
+set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
 
 create or replace function public.set_comment_author_name()
 returns trigger
@@ -300,6 +374,15 @@ alter table public.post_likes enable row level security;
 alter table public.polls enable row level security;
 alter table public.poll_options enable row level security;
 alter table public.poll_votes enable row level security;
+alter table public.email_sends enable row level security;
+alter table public.webinar_registrations enable row level security;
+
+-- Data API table privileges. RLS still decides which rows each role can touch;
+-- these grants prevent SQL-created tables from being invisible to PostgREST.
+grant select, insert, delete on public.subscribers to anon, authenticated;
+grant insert on public.page_views to anon, authenticated;
+grant select, insert, update, delete on public.email_sends to authenticated;
+grant select, insert, update, delete on public.webinar_registrations to authenticated;
 
 -- Helper: is the current user the site owner?
 create or replace function public.is_owner()
@@ -485,7 +568,112 @@ create policy "poll_votes_update_own" on public.poll_votes
     )
   );
 
+-- email_sends / webinar_registrations: owner-only. The cron job and the
+-- Resend webhook authenticate with the service_role key, which bypasses RLS,
+-- so anon/authenticated sessions must see nothing in either table.
+drop policy if exists "email_sends_owner_read" on public.email_sends;
+drop policy if exists "email_sends_owner_write" on public.email_sends;
+create policy "email_sends_owner_read" on public.email_sends
+  for select using (public.is_owner());
+create policy "email_sends_owner_write" on public.email_sends
+  for all using (public.is_owner()) with check (public.is_owner());
+
+drop policy if exists "webinar_registrations_owner_read" on public.webinar_registrations;
+drop policy if exists "webinar_registrations_owner_write" on public.webinar_registrations;
+create policy "webinar_registrations_owner_read" on public.webinar_registrations
+  for select using (public.is_owner());
+create policy "webinar_registrations_owner_write" on public.webinar_registrations
+  for all using (public.is_owner()) with check (public.is_owner());
+
+drop policy if exists "media_public_read" on storage.objects;
+drop policy if exists "media_owner_insert" on storage.objects;
+drop policy if exists "media_owner_update" on storage.objects;
+drop policy if exists "media_owner_delete" on storage.objects;
+create policy "media_public_read" on storage.objects
+  for select
+  using (bucket_id = 'media');
+create policy "media_owner_insert" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'media' and public.is_owner());
+create policy "media_owner_update" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'media' and public.is_owner())
+  with check (bucket_id = 'media' and public.is_owner());
+create policy "media_owner_delete" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'media' and public.is_owner());
+
 -- ============================================================
 -- IMPORTANT: make yourself the owner (run after your first sign-in)
 -- ============================================================
 -- update public.profiles set role = 'owner' where email = 'you@example.com';
+
+-- ---------- Account upgrade (bookmarks, profile fields, avatars) ----------
+-- Account area upgrade: richer profiles + bookmarks + avatars bucket
+-- Apply in Supabase SQL editor or via migration tooling.
+
+alter table public.profiles
+  add column if not exists bio text,
+  add column if not exists institution text,
+  add column if not exists title text,
+  add column if not exists newsletter_format text not null default 'all'
+    check (newsletter_format in ('all', 'essays', 'announcements', 'none'));
+
+create table if not exists public.bookmarks (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  post_id uuid not null references public.posts(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (user_id, post_id)
+);
+
+create index if not exists bookmarks_user_created_idx
+  on public.bookmarks (user_id, created_at desc);
+
+alter table public.bookmarks enable row level security;
+
+drop policy if exists "bookmarks_read_own" on public.bookmarks;
+drop policy if exists "bookmarks_insert_own" on public.bookmarks;
+drop policy if exists "bookmarks_delete_own" on public.bookmarks;
+create policy "bookmarks_read_own" on public.bookmarks
+  for select to authenticated using (user_id = auth.uid() or public.is_owner());
+create policy "bookmarks_insert_own" on public.bookmarks
+  for insert to authenticated
+  with check (
+    user_id = auth.uid()
+    and exists (select 1 from public.posts where posts.id = post_id and posts.status = 'published')
+  );
+create policy "bookmarks_delete_own" on public.bookmarks
+  for delete to authenticated using (user_id = auth.uid() or public.is_owner());
+
+-- Avatars: public read, users manage their own folder (<uid>/...)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'avatars',
+  'avatars',
+  true,
+  2097152,
+  array['image/jpeg', 'image/png', 'image/webp']
+)
+on conflict (id) do update
+set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "avatars_public_read" on storage.objects;
+drop policy if exists "avatars_insert_own" on storage.objects;
+drop policy if exists "avatars_update_own" on storage.objects;
+drop policy if exists "avatars_delete_own" on storage.objects;
+create policy "avatars_public_read" on storage.objects
+  for select using (bucket_id = 'avatars');
+create policy "avatars_insert_own" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "avatars_update_own" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "avatars_delete_own" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'avatars' and ((storage.foldername(name))[1] = auth.uid()::text or public.is_owner()));
+

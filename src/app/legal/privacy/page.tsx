@@ -66,7 +66,8 @@ export default function PrivacyPage() {
 
         <h2>5. Your rights</h2>
         <p>
-          You may unsubscribe at any time from your account page. You may
+          You may unsubscribe at any time from your account page, or by using
+          the unsubscribe link at the bottom of any newsletter email. You may
           request a copy or deletion of your data by emailing{" "}
           <a href={`mailto:${SITE.email}`}>{SITE.email}</a>. Deletion removes
           your profile and subscription record; anonymised aggregate analytics

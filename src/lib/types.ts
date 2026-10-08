@@ -11,6 +11,10 @@ export interface Profile {
   email: string | null;
   full_name: string | null;
   avatar_url: string | null;
+  bio: string | null;
+  institution: string | null;
+  title: string | null;
+  newsletter_format: "all" | "essays" | "announcements" | "none";
   role: "owner" | "reader";
   created_at: string;
 }
@@ -95,6 +99,13 @@ export interface Comment {
   updated_at: string;
 }
 
+export interface Bookmark {
+  user_id: string;
+  post_id: string;
+  created_at: string;
+  posts?: Pick<Post, "id" | "slug" | "title" | "excerpt" | "published_at" | "cover_image_url"> | null;
+}
+
 export interface PollOption {
   id: string;
   poll_id: string;
@@ -110,4 +121,37 @@ export interface Poll {
   status: "draft" | "open" | "closed";
   allow_results_before_vote: boolean;
   poll_options: PollOption[];
+}
+
+export type EmailPurpose =
+  | "welcome"
+  | "newsletter"
+  | "webinar_announcement"
+  | "webinar_reminder";
+
+export type EmailStatus =
+  | "queued"
+  | "sent"
+  | "delivered"
+  | "opened"
+  | "clicked"
+  | "bounced"
+  | "failed";
+
+export interface EmailSend {
+  id: string;
+  purpose: EmailPurpose;
+  recipient_email: string;
+  subject: string | null;
+  post_id: string | null;
+  webinar_id: string | null;
+  resend_email_id: string | null;
+  status: EmailStatus;
+  error_message: string | null;
+  sent_at: string | null;
+  delivered_at: string | null;
+  opened_at: string | null;
+  clicked_at: string | null;
+  bounced_at: string | null;
+  created_at: string;
 }

@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PostRow } from "@/components/post-card";
 import { Reveal } from "@/components/reveal";
-import { requireSignedIn } from "@/lib/auth";
+import { getSupabaseAnon } from "@/lib/supabase/public";
 import type { Post } from "@/lib/types";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Writing",
+  title: "Articles",
   description: "Essays and long-form articles.",
 };
 
@@ -17,14 +17,18 @@ export default async function BlogPage({
 }: {
   searchParams: { tag?: string };
 }) {
-  const { supabase } = await requireSignedIn("/blog");
+  const supabase = getSupabaseAnon();
   let posts: Post[] = [];
-  const { data } = await supabase
-    .from("posts")
-    .select("*")
-    .eq("status", "published")
-    .order("published_at", { ascending: false });
-  posts = (data ?? []) as Post[];
+  if (supabase) {
+    const { data } = await supabase
+      .from("posts")
+      .select(
+        "id, slug, title, excerpt, tags, status, published_at, reading_time_minutes, updated_at",
+      )
+      .eq("status", "published")
+      .order("published_at", { ascending: false });
+    posts = (data ?? []) as Post[];
+  }
 
   const tags = [...new Set(posts.flatMap((p) => p.tags))].slice(0, 12);
   const activeTag =
@@ -38,12 +42,12 @@ export default async function BlogPage({
   return (
     <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
       <Reveal>
-        <p className="text-xs uppercase tracking-[0.25em] text-ink-4">Writing</p>
+        <p className="text-xs uppercase tracking-[0.25em] text-ink-4">Articles</p>
         <h1 className="mt-4 font-serif text-4xl tracking-tight text-ink sm:text-6xl">
           Essays &amp; articles
         </h1>
         <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-3">
-          Long-form writing on research, methods, and the ideas in between.
+          Long-form articles on research, methods, and the ideas in between.
           Every piece carries its sources at the end.
         </p>
       </Reveal>

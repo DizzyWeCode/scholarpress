@@ -1,23 +1,28 @@
 import type { Metadata } from "next";
-import { Inter, Newsreader } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
-import { SITE, absoluteUrl } from "@/lib/site";
+import { SITE, absoluteOgImage, absoluteUrl } from "@/lib/site";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { CookieBanner } from "@/components/cookie-banner";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
+import { ToastProvider } from "@/components/toast";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
+// Self-hosted variable subsets (latin) from Google Fonts — Inter & Newsreader,
+// SIL Open Font License. Regenerate: see scripts/ in the repo root.
+const inter = localFont({
+  src: [{ path: "../fonts/inter-latin.woff2", weight: "400 600", style: "normal" }],
   display: "swap",
+  variable: "--font-inter",
 });
 
-const newsreader = Newsreader({
-  subsets: ["latin"],
-  variable: "--font-newsreader",
+const newsreader = localFont({
+  src: [
+    { path: "../fonts/newsreader-latin.woff2", weight: "400 600", style: "normal" },
+    { path: "../fonts/newsreader-latin-italic.woff2", weight: "400", style: "italic" },
+  ],
   display: "swap",
-  style: ["normal", "italic"],
+  variable: "--font-newsreader",
 });
 
 export const metadata: Metadata = {
@@ -27,11 +32,23 @@ export const metadata: Metadata = {
     template: `%s — ${SITE.name}`,
   },
   description: SITE.description,
+  // "./" resolves to the current path → every route self-canonicalises
+  // against metadataBase (avoids duplicate-content between hosts/paths).
+  alternates: {
+    canonical: "./",
+  },
   openGraph: {
     type: "website",
     siteName: SITE.siteTitle,
     title: SITE.siteTitle,
     description: SITE.description,
+    images: [{ url: absoluteOgImage() }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE.siteTitle,
+    description: SITE.description,
+    images: [absoluteOgImage()],
   },
 };
 
@@ -46,11 +63,13 @@ export default function RootLayout({
             __html: "document.documentElement.classList.add('js')",
           }}
         />
-        <SiteHeader />
-        <main id="main">{children}</main>
-        <SiteFooter />
-        <CookieBanner />
-        <AnalyticsTracker />
+        <ToastProvider>
+          <SiteHeader />
+          <main id="main">{children}</main>
+          <SiteFooter />
+          <CookieBanner />
+          <AnalyticsTracker />
+        </ToastProvider>
       </body>
     </html>
   );

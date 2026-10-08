@@ -28,7 +28,8 @@ export default function TermsPage() {
           You may subscribe to the newsletter with an email address, or sign in
           using Google OAuth or a one-time email link. You are responsible for
           the accuracy of the email address you provide. You may unsubscribe at
-          any time from your account page or by contacting the Owner.
+          any time from your account page, from the unsubscribe link in any
+          newsletter email, or by contacting the Owner.
         </p>
 
         <h2>3. Acceptable use</h2>
@@ -47,8 +48,7 @@ export default function TermsPage() {
           licences of their respective publishers — the DOI link on each paper
           leads to the publisher&rsquo;s terms. Third-party images are credited
           alongside the image or in the site footer and remain the property of
-          their creators, used under their stated licences (e.g. the Unsplash
-          License).
+          their creators, used under their stated licences.
         </p>
         <p>
           You may share links to any public page and quote brief excerpts with

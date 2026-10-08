@@ -4,7 +4,7 @@ import { SubscribeButton } from "@/components/subscribe-button";
 import { NavLinks, type NavLink } from "@/components/nav-links";
 
 const NAV: NavLink[] = [
-  { href: "/blog", label: "Writing" },
+  { href: "/blog", label: "Articles" },
   { href: "/papers", label: "Research" },
   { href: "/webinars", label: "Webinars" },
   { href: "/about", label: "About" },

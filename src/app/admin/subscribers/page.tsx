@@ -3,11 +3,15 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useToast } from "@/components/toast";
 import type { Subscriber } from "@/lib/types";
 import { Download, Trash2 } from "lucide-react";
 
 export default function AdminSubscribersPage() {
   const [subscribers, setSubscribers] = useState<Subscriber[] | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Subscriber | null>(null);
+  const { push } = useToast();
 
   async function load() {
     const { data } = await getSupabaseBrowser()
@@ -21,8 +25,10 @@ export default function AdminSubscribersPage() {
   }, []);
 
   async function remove(id: string) {
-    if (!window.confirm("Remove this subscriber?")) return;
-    await getSupabaseBrowser().from("subscribers").delete().eq("id", id);
+    const { error } = await getSupabaseBrowser().from("subscribers").delete().eq("id", id);
+    setPendingDelete(null);
+    if (error) push({ kind: "error", title: "Could not remove subscriber", body: error.message });
+    else push({ kind: "success", title: "Subscriber removed." });
     load();
   }
 
@@ -75,7 +81,7 @@ export default function AdminSubscribersPage() {
                 {format(new Date(s.created_at), "dd MMM yyyy")}
               </span>
               <button
-                onClick={() => remove(s.id)}
+                onClick={() => setPendingDelete(s)}
                 className="justify-self-start p-1 text-ink-4 transition-colors hover:text-red-700 sm:justify-self-end"
                 aria-label={`Remove ${s.email}`}
               >
@@ -85,6 +91,15 @@ export default function AdminSubscribersPage() {
           ))
         )}
       </div>
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title="Remove this subscriber?"
+        body={`${pendingDelete?.email ?? ""} will stop receiving newsletters. This cannot be undone.`}
+        confirmLabel="Remove subscriber"
+        danger
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => pendingDelete && void remove(pendingDelete.id)}
+      />
     </div>
   );
 }

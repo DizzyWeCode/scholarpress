@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useToast } from "@/components/toast";
 import type { Paper } from "@/lib/types";
 import { Plus, Trash2, X } from "lucide-react";
 
@@ -27,6 +29,8 @@ export default function AdminPapersPage() {
   const [papers, setPapers] = useState<Paper[] | null>(null);
   const [editing, setEditing] = useState<Paper | null>(null);
   const [creating, setCreating] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<Paper | null>(null);
+  const { push } = useToast();
 
   async function load() {
     const { data } = await getSupabaseBrowser()
@@ -40,8 +44,10 @@ export default function AdminPapersPage() {
   }, []);
 
   async function remove(id: string) {
-    if (!window.confirm("Delete this paper?")) return;
-    await getSupabaseBrowser().from("papers").delete().eq("id", id);
+    const { error } = await getSupabaseBrowser().from("papers").delete().eq("id", id);
+    setPendingDelete(null);
+    if (error) push({ kind: "error", title: "Could not delete paper", body: error.message });
+    else push({ kind: "success", title: "Paper deleted." });
     load();
   }
 
@@ -81,7 +87,7 @@ export default function AdminPapersPage() {
               </button>
               <span className="text-xs text-ink-4">{paper.venue}</span>
               <button
-                onClick={() => remove(paper.id)}
+                onClick={() => setPendingDelete(paper)}
                 className="justify-self-start p-1 text-ink-4 transition-colors hover:text-red-700 sm:justify-self-end"
                 aria-label={`Delete ${paper.title}`}
               >
@@ -106,6 +112,15 @@ export default function AdminPapersPage() {
           }}
         />
       )}
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title="Delete this paper?"
+        body={`“${pendingDelete?.title ?? ""}” will be permanently removed. This cannot be undone.`}
+        confirmLabel="Delete paper"
+        danger
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => pendingDelete && void remove(pendingDelete.id)}
+      />
     </div>
   );
 }
