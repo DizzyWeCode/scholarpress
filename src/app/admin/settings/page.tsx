@@ -33,7 +33,7 @@ export default function AdminSettingsPage() {
             <li>☐ Supabase Auth → URL Configuration: Site URL + redirect URLs include the custom domain</li>
             <li>☐ <code>/sitemap.xml</code> + <code>/robots.txt</code> return 200 on the custom domain</li>
             <li>☐ Share an article — link and OG image use the custom domain, not localhost</li>
-            <li>☐ Replace <code>/covers/field-notes.png</code> hero + portrait slots with real photos (1200×630 OG default at <code>/covers/default-og.png</code>)</li>
+            <li>☐ Replace the temporary <code>/covers/microscope-lab.jpg</code>, <code>/covers/lab-researcher.jpg</code>, and <code>/covers/research-still-life.jpg</code> images with original photos before launch</li>
             <li>☐ Run the new migration: <code>supabase/migrations/2026-10-07-account-bookmarks-avatars.sql</code> (bookmarks, profile fields, avatars bucket)</li>
           </ul>
         </section>
