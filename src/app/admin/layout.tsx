@@ -55,9 +55,7 @@ export default async function AdminLayout({
       <div className="mx-auto max-w-xl px-5 py-28 text-center">
         <h1 className="font-serif text-3xl text-ink">Owner access only</h1>
         <p className="mt-4 text-sm leading-relaxed text-ink-3">
-          You are signed in as {user.email}, but this account is not marked as
-          the site owner. Run the owner SQL in supabase/schema.sql against this
-          email address, then reload.
+          This area is restricted to the site owner.
         </p>
       </div>
     );

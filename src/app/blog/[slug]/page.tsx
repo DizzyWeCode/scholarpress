@@ -84,12 +84,13 @@ export default async function ArticlePage({
     image: post.cover_image_url ?? undefined,
     mainEntityOfPage: url,
   };
+  const jsonLdString = JSON.stringify(jsonLd).replace(/</g, "\\u003c");
 
   return (
     <article className="mx-auto max-w-3xl px-5 py-16 sm:px-8 sm:py-24">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdString }}
       />
       <Reveal>
         <Link

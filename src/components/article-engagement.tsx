@@ -52,7 +52,12 @@ export function ArticleEngagement({
           .eq("post_id", postId)
           .order("created_at", { ascending: true }),
         id
-          ? supabase.from("post_likes").select("post_id").eq("post_id", postId).maybeSingle()
+          ? supabase
+              .from("post_likes")
+              .select("post_id")
+              .eq("post_id", postId)
+              .eq("user_id", id)
+              .maybeSingle()
           : Promise.resolve({ data: null, error: null }),
         supabase
           .from("polls")
