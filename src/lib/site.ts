@@ -25,13 +25,11 @@ export const SITE = {
   builtBy: { name: "Akodi Ltd", url: "" },
   // Footer attribution note for imagery used across the site
   imageAttributionNote:
-    "Images and illustrations on this site are original unless credited alongside the image.",
-  // Visual system — replace these files in /public/covers to rebrand imagery.
-  // Keep the academic tone: real people, real research context, Malawi/MUST,
-  // malaria microscopy, lab/clinical settings. All have descriptive alt text.
+    "Temporary preview imagery is sourced from Unsplash and will be replaced with original images before launch.",
+  // Temporary preview imagery — replace these files with Dr Fraction's own photos before launch.
   images: {
-    hero: { src: "/covers/field-notes.png", alt: "Field research notes on antimalarial treatment in Malawi" },
-    aboutPortrait: { src: "/covers/field-notes.png", alt: "Portrait placeholder — Dr Fraction Dzinjalamala" },
+    hero: { src: "/covers/microscope-lab.jpg", alt: "A researcher working with a microscope in a laboratory" },
+    aboutPortrait: { src: "/covers/lab-researcher.jpg", alt: "Temporary laboratory researcher portrait placeholder" },
   },
 } as const;
 
@@ -58,9 +56,9 @@ export function isSiteUrlConfigured(): boolean {
   return Boolean(process.env.NEXT_PUBLIC_SITE_URL?.trim());
 }
 
-export const DEFAULT_OG_IMAGE = "/covers/default-og.png";
+export const DEFAULT_OG_IMAGE = "/covers/research-still-life.jpg";
 export const DEFAULT_OG_IMAGE_ALT =
-  "Dr Fraction Dzinjalamala — clinical pharmacology for better malaria treatment";
+  "Temporary research still-life placeholder for Dr Fraction Dzinjalamala";
 
 export function absoluteOgImage(url?: string | null): string {
   if (!url) return absoluteUrl(DEFAULT_OG_IMAGE);
