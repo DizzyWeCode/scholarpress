@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Dialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/toast";
 import type { Paper } from "@/lib/types";
 import { normalizeDoi } from "@/lib/utils";
@@ -187,65 +188,58 @@ function PaperForm({
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/40 p-4" onClick={onClose}>
-      <div
-        className="mx-auto my-10 max-w-2xl bg-paper p-8"
-        style={{ borderRadius: 7 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif text-2xl tracking-tight text-ink">
-            {paper ? "Edit paper" : "New paper"}
-          </h2>
+    <Dialog open title={paper ? "Edit paper" : "New paper"} onClose={onClose}>
+      <div>
+        <div className="flex justify-end">
           <button onClick={onClose} aria-label="Close" className="p-1 text-ink-4 hover:text-ink">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="mt-6 grid gap-6">
           <div>
-            <label className={labelCls}>Title</label>
-            <input value={form.title} onChange={(e) => set("title", e.target.value)} className={`${inputCls} mt-2`} />
+            <label className={labelCls} htmlFor="paper-title">Title</label>
+            <input id="paper-title" value={form.title} onChange={(e) => set("title", e.target.value)} className={`${inputCls} mt-2`} />
           </div>
           <div>
-            <label className={labelCls}>Authors (comma separated)</label>
-            <input value={form.authors} onChange={(e) => set("authors", e.target.value)} placeholder="A. Moyo, J. Smith" className={`${inputCls} mt-2`} />
+            <label className={labelCls} htmlFor="paper-authors">Authors (comma separated)</label>
+            <input id="paper-authors" value={form.authors} onChange={(e) => set("authors", e.target.value)} placeholder="A. Moyo, J. Smith" className={`${inputCls} mt-2`} />
           </div>
           <div>
-            <label className={labelCls}>Abstract</label>
-            <textarea value={form.abstract} onChange={(e) => set("abstract", e.target.value)} rows={4} className={`${inputCls} mt-2 resize-y`} />
+            <label className={labelCls} htmlFor="paper-abstract">Abstract</label>
+            <textarea id="paper-abstract" value={form.abstract} onChange={(e) => set("abstract", e.target.value)} rows={4} className={`${inputCls} mt-2 resize-y`} />
           </div>
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
-              <label className={labelCls}>Venue (journal / conference)</label>
-              <input value={form.venue} onChange={(e) => set("venue", e.target.value)} className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="paper-venue">Venue (journal / conference)</label>
+              <input id="paper-venue" value={form.venue} onChange={(e) => set("venue", e.target.value)} className={`${inputCls} mt-2`} />
             </div>
             <div>
-              <label className={labelCls}>Year</label>
-              <input type="number" value={form.year ?? ""} onChange={(e) => set("year", e.target.value ? Number(e.target.value) : null)} className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="paper-year">Year</label>
+              <input id="paper-year" type="number" value={form.year ?? ""} onChange={(e) => set("year", e.target.value ? Number(e.target.value) : null)} className={`${inputCls} mt-2`} />
             </div>
           </div>
           <div className="grid gap-6 sm:grid-cols-3">
             <div>
-              <label className={labelCls}>DOI</label>
-              <input value={form.doi} onChange={(e) => set("doi", e.target.value)} placeholder="10.1000/xyz123" className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="paper-doi">DOI</label>
+              <input id="paper-doi" value={form.doi} onChange={(e) => set("doi", e.target.value)} placeholder="10.1000/xyz123" className={`${inputCls} mt-2`} />
             </div>
             <div>
-              <label className={labelCls}>Publisher URL</label>
-              <input value={form.url} onChange={(e) => set("url", e.target.value)} className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="paper-url">Publisher URL</label>
+              <input id="paper-url" value={form.url} onChange={(e) => set("url", e.target.value)} className={`${inputCls} mt-2`} />
             </div>
             <div>
-              <label className={labelCls}>PDF URL</label>
-              <input value={form.pdf_url} onChange={(e) => set("pdf_url", e.target.value)} className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="paper-pdf-url">PDF URL</label>
+              <input id="paper-pdf-url" value={form.pdf_url} onChange={(e) => set("pdf_url", e.target.value)} className={`${inputCls} mt-2`} />
             </div>
           </div>
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
-              <label className={labelCls}>Tags (comma separated)</label>
-              <input value={form.tags} onChange={(e) => set("tags", e.target.value)} className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="paper-tags">Tags (comma separated)</label>
+              <input id="paper-tags" value={form.tags} onChange={(e) => set("tags", e.target.value)} className={`${inputCls} mt-2`} />
             </div>
             <div>
-              <label className={labelCls}>Status</label>
-              <select value={form.status} onChange={(e) => set("status", e.target.value)} className={`${inputCls} mt-2`}>
+              <label className={labelCls} htmlFor="paper-status">Status</label>
+              <select id="paper-status" value={form.status} onChange={(e) => set("status", e.target.value)} className={`${inputCls} mt-2`}>
                 <option value="published">Published</option>
                 <option value="draft">Draft</option>
               </select>
@@ -270,6 +264,6 @@ function PaperForm({
           </button>
         </div>
       </div>
-    </div>
+    </Dialog>
   );
 }

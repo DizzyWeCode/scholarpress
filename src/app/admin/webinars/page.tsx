@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Dialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/toast";
 import type { Webinar } from "@/lib/types";
 import { Mail, Plus, Trash2, X } from "lucide-react";
@@ -203,14 +204,9 @@ function AnnounceDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/40 p-4" onClick={onClose}>
-      <div
-        className="mx-auto my-10 max-w-md bg-paper p-8"
-        style={{ borderRadius: 7 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif text-2xl tracking-tight text-ink">Email announcement</h2>
+    <Dialog open title="Email announcement" onClose={onClose}>
+      <div>
+        <div className="flex justify-end">
           <button onClick={onClose} aria-label="Close" className="p-1 text-ink-4 hover:text-ink">
             <X className="h-5 w-5" />
           </button>
@@ -221,8 +217,9 @@ function AnnounceDialog({
         {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
         <div className="mt-6 grid gap-4">
           <div>
-            <label className={labelCls}>Send a test to</label>
+            <label className={labelCls} htmlFor="announcement-test-email">Send a test to</label>
             <input
+              id="announcement-test-email"
               type="email"
               value={testEmail}
               onChange={(e) => setTestEmail(e.target.value)}
@@ -266,7 +263,7 @@ function AnnounceDialog({
           void send("all", true);
         }}
       />
-    </div>
+    </Dialog>
   );
 }
 
@@ -326,56 +323,49 @@ function WebinarForm({
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/40 p-4" onClick={onClose}>
-      <div
-        className="mx-auto my-10 max-w-2xl bg-paper p-8"
-        style={{ borderRadius: 7 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif text-2xl tracking-tight text-ink">
-            {webinar ? "Edit webinar" : "Announce webinar"}
-          </h2>
+    <Dialog open title={webinar ? "Edit webinar" : "Announce webinar"} onClose={onClose}>
+      <div>
+        <div className="flex justify-end">
           <button onClick={onClose} aria-label="Close" className="p-1 text-ink-4 hover:text-ink">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="mt-6 grid gap-6">
           <div>
-            <label className={labelCls}>Title</label>
-            <input value={form.title} onChange={(e) => set("title", e.target.value)} className={`${inputCls} mt-2`} />
+            <label className={labelCls} htmlFor="webinar-title">Title</label>
+            <input id="webinar-title" value={form.title} onChange={(e) => set("title", e.target.value)} className={`${inputCls} mt-2`} />
           </div>
           <div>
-            <label className={labelCls}>Description</label>
-            <textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={3} className={`${inputCls} mt-2 resize-y`} />
+            <label className={labelCls} htmlFor="webinar-description">Description</label>
+            <textarea id="webinar-description" value={form.description} onChange={(e) => set("description", e.target.value)} rows={3} className={`${inputCls} mt-2 resize-y`} />
           </div>
           <div className="grid gap-6 sm:grid-cols-3">
             <div>
-              <label className={labelCls}>Date &amp; time</label>
-              <input type="datetime-local" value={form.starts_at} onChange={(e) => set("starts_at", e.target.value)} className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="webinar-starts-at">Date &amp; time</label>
+              <input id="webinar-starts-at" type="datetime-local" value={form.starts_at} onChange={(e) => set("starts_at", e.target.value)} className={`${inputCls} mt-2`} />
             </div>
             <div>
-              <label className={labelCls}>Duration (min)</label>
-              <input type="number" value={form.duration_minutes ?? ""} onChange={(e) => set("duration_minutes", e.target.value ? Number(e.target.value) : null)} className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="webinar-duration">Duration (min)</label>
+              <input id="webinar-duration" type="number" value={form.duration_minutes ?? ""} onChange={(e) => set("duration_minutes", e.target.value ? Number(e.target.value) : null)} className={`${inputCls} mt-2`} />
             </div>
             <div>
-              <label className={labelCls}>Platform</label>
-              <input value={form.platform} onChange={(e) => set("platform", e.target.value)} className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="webinar-platform">Platform</label>
+              <input id="webinar-platform" value={form.platform} onChange={(e) => set("platform", e.target.value)} className={`${inputCls} mt-2`} />
             </div>
           </div>
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
-              <label className={labelCls}>Registration URL</label>
-              <input value={form.registration_url} onChange={(e) => set("registration_url", e.target.value)} placeholder="https://zoom.us/webinar/register/…" className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="webinar-registration-url">Registration URL</label>
+              <input id="webinar-registration-url" value={form.registration_url} onChange={(e) => set("registration_url", e.target.value)} placeholder="https://zoom.us/webinar/register/…" className={`${inputCls} mt-2`} />
             </div>
             <div>
-              <label className={labelCls}>Recording URL (for past sessions)</label>
-              <input value={form.recording_url} onChange={(e) => set("recording_url", e.target.value)} className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="webinar-recording-url">Recording URL (for past sessions)</label>
+              <input id="webinar-recording-url" value={form.recording_url} onChange={(e) => set("recording_url", e.target.value)} className={`${inputCls} mt-2`} />
             </div>
           </div>
           <div>
-            <label className={labelCls}>Status</label>
-            <select value={form.status} onChange={(e) => set("status", e.target.value)} className={`${inputCls} mt-2`}>
+            <label className={labelCls} htmlFor="webinar-status">Status</label>
+            <select id="webinar-status" value={form.status} onChange={(e) => set("status", e.target.value)} className={`${inputCls} mt-2`}>
               <option value="upcoming">Upcoming</option>
               <option value="past">Past (recording)</option>
               <option value="draft">Draft (hidden)</option>
@@ -396,6 +386,6 @@ function WebinarForm({
           </button>
         </div>
       </div>
-    </div>
+    </Dialog>
   );
 }
