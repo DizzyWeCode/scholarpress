@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PaperCard } from "@/components/paper-card";
 import { Reveal } from "@/components/reveal";
 import { SITE } from "@/lib/site";
-import { requireSignedIn } from "@/lib/auth";
+import { getSupabaseAnon } from "@/lib/supabase/public";
 import type { Paper } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -10,18 +10,19 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Research",
   description: `Peer-reviewed publications by ${SITE.name}.`,
-  robots: { index: false, follow: false },
 };
 
 export default async function PapersPage() {
-  const { supabase } = await requireSignedIn("/papers");
+  const supabase = getSupabaseAnon();
   let papers: Paper[] = [];
-  const { data } = await supabase
-    .from("papers")
-    .select("*")
-    .eq("status", "published")
-    .order("year", { ascending: false });
-  papers = (data ?? []) as Paper[];
+  if (supabase) {
+    const { data } = await supabase
+      .from("papers")
+      .select("*")
+      .eq("status", "published")
+      .order("year", { ascending: false });
+    papers = (data ?? []) as Paper[];
+  }
 
   const byYear = papers.reduce<Record<string, Paper[]>>((acc, p) => {
     const y = p.year ? String(p.year) : "Other";
@@ -35,11 +36,10 @@ export default async function PapersPage() {
       <Reveal>
         <p className="text-xs uppercase tracking-[0.25em] text-ink-4">Research</p>
         <h1 className="mt-4 font-serif text-4xl tracking-tight text-ink sm:text-6xl">
-          Publications
+          Papers, methods, and findings
         </h1>
         <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-3">
-          Peer-reviewed papers, preprints, and conference work. Where a
-          publisher page exists, the DOI link takes you there.
+          Research outputs and the questions behind them. Where a publisher page exists, the DOI link takes you there.
         </p>
       </Reveal>
 

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ExternalLink, FileText } from "lucide-react";
 import { CitationControl } from "@/components/citation-control";
 import { Reveal } from "@/components/reveal";
-import { requireSignedIn } from "@/lib/auth";
+import { getSupabaseAnon } from "@/lib/supabase/public";
 import { normalizeDoi } from "@/lib/utils";
 import { absoluteUrl, SITE } from "@/lib/site";
 import type { Paper } from "@/lib/types";
@@ -12,7 +12,8 @@ import type { Paper } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 async function getPaper(id: string): Promise<Paper | null> {
-  const { supabase } = await requireSignedIn(`/papers/${id}`);
+  const supabase = getSupabaseAnon();
+  if (!supabase) return null;
   const { data } = await supabase
     .from("papers")
     .select("*")
@@ -29,7 +30,6 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   return {
     title: paper.title,
     description: paper.abstract ?? `Publication by ${SITE.name}.`,
-    robots: { index: false, follow: false },
     alternates: { canonical: absoluteUrl(`/papers/${paper.id}`) },
     other: {
       citation_title: paper.title,

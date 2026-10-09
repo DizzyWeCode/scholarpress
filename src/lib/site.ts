@@ -4,9 +4,12 @@
 export const SITE = {
   name: "Dr Fraction Dzinjalamala",
   tagline: "Clinical pharmacology for better malaria treatment",
-  siteTitle: "Fraction Dzinjalamala — Research, Articles & Webinars",
+  platformPromise: "Ideas, research, books, and conversations from Dr Fraction Dzinjalamala.",
+  platformDescription:
+    "A living record of the work, questions, and projects that shape how I think, teach, research, and make things.",
+  siteTitle: "Fraction Dzinjalamala — Ideas, Research, Books & Events",
   description:
-    "The academic home of Dr Fraction Dzinjalamala: research, articles, and public conversation about antimalarial medicines, drug resistance, and clinical pharmacology from Malawi.",
+    "The public home of Dr Fraction Dzinjalamala: ideas, research, books, events, teaching, and the questions connecting the work.",
   affiliation: "Department of Clinical Sciences, MUST",
   email: "fdzinjalamala@must.ac.mw",
   // Optional scholarly profiles — leave empty to hide

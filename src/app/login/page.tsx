@@ -68,14 +68,15 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto max-w-md px-5 py-24 sm:px-8">
-      <p className="text-xs uppercase tracking-[0.25em] text-ink-4">Members</p>
+      <p className="text-xs uppercase tracking-[0.25em] text-ink-4">Follow the work</p>
       <h1 className="mt-4 font-serif text-4xl tracking-tight text-ink">
         Sign in or create your account
       </h1>
       <p className="mt-4 text-sm leading-relaxed text-ink-3">
-        Access members-only research, articles, and webinars. New here? Your
-        account is created automatically the first time you continue. No password
-        is required.
+        Read the public work, then create an account to save articles, join
+        conversations, manage your reading list, and follow the work. New here?
+        Your account is created automatically the first time you continue. No
+        password is required.
       </p>
 
       {error ? (

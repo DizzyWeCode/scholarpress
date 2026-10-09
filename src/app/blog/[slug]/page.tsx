@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
-import { requireSignedIn } from "@/lib/auth";
+import { getSupabaseAnon } from "@/lib/supabase/public";
 import { ArticleBody } from "@/components/article-body";
 import { ReferenceList } from "@/components/reference-list";
 import { ShareButtons } from "@/components/share-buttons";
@@ -19,9 +19,8 @@ import type { Post } from "@/lib/types";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Members-only article",
-  description: "Sign in to read this article.",
-  robots: { index: false, follow: false },
+  title: "Writing",
+  description: "Writing from Dr Fraction Dzinjalamala.",
 };
 
 export default async function ArticlePage({
@@ -29,7 +28,8 @@ export default async function ArticlePage({
 }: {
   params: { slug: string };
 }) {
-  const { supabase } = await requireSignedIn(`/blog/${params.slug}`);
+  const supabase = getSupabaseAnon();
+  if (!supabase) notFound();
   const { data } = await supabase
     .from("posts")
     .select("*")
@@ -64,12 +64,13 @@ export default async function ArticlePage({
           href="/blog"
           className="text-xs uppercase tracking-widest text-ink-4 transition-colors hover:text-ink"
         >
-          ← All articles
+          ← All writing
         </Link>
         <h1 className="mt-6 font-serif text-4xl leading-[1.12] tracking-[-0.015em] text-ink sm:text-5xl">
           {post.title}
         </h1>
-        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-3">
+          {post.excerpt ? <p className="mt-5 max-w-2xl text-lg leading-relaxed text-ink-3">{post.excerpt}</p> : null}
+          <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-3">
           <span>{SITE.name}</span>
           <span aria-hidden>·</span>
           {post.published_at ? (
