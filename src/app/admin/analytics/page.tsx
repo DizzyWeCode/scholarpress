@@ -12,6 +12,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { AdminPageHeader } from "@/components/admin-ui";
 
 type Range = 7 | 30 | 90;
 
@@ -73,10 +74,10 @@ export default function AdminAnalyticsPage() {
               key={r}
               onClick={() => setRange(r)}
               aria-pressed={range === r}
-              className={`rounded-full border px-4 py-1.5 text-xs transition-colors ${
+              className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
                 range === r
-                  ? "border-ink bg-ink text-paper"
-                  : "border-line text-ink-3 hover:border-ink hover:text-ink"
+                  ? "bg-indigo-600 text-white"
+                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
               }`}
             >
               {r}d

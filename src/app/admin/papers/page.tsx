@@ -8,6 +8,7 @@ import { useToast } from "@/components/toast";
 import type { Paper } from "@/lib/types";
 import { normalizeDoi } from "@/lib/utils";
 import { Plus, Trash2, X } from "lucide-react";
+import { AdminButton, AdminPageHeader, StatusBadge } from "@/components/admin-ui";
 
 const inputCls =
   "w-full border-0 border-b border-line bg-transparent px-0 py-2 text-sm text-ink outline-none transition-colors placeholder:text-ink-4 focus:border-ink";
@@ -55,17 +56,9 @@ export default function AdminPapersPage() {
 
   return (
     <div>
-      <div className="flex items-baseline justify-between">
-        <h1 className="font-serif text-3xl tracking-tight text-ink">Papers</h1>
-        <button
-          onClick={() => setCreating(true)}
-          className="inline-flex items-center gap-1.5 rounded-full bg-ink px-5 py-2 text-sm text-paper transition-opacity hover:opacity-80"
-        >
-          <Plus className="h-4 w-4" /> Add paper
-        </button>
-      </div>
+      <AdminPageHeader eyebrow="Content" title="Papers" description={`${papers?.length ?? 0} publications in your workspace.`} actions={<AdminButton onClick={() => setCreating(true)}><Plus className="mr-1.5 h-4 w-4" /> Add paper</AdminButton>} />
 
-      <div className="mt-8">
+      <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white px-5 shadow-sm">
         {papers === null ? (
           <p className="text-sm text-ink-3">Loading…</p>
         ) : papers.length === 0 ? (
@@ -83,9 +76,7 @@ export default function AdminPapersPage() {
                 className="text-left font-serif text-lg tracking-tight text-ink transition-opacity hover:opacity-60"
               >
                 {paper.title}
-                <span className="ml-3 text-xs font-sans uppercase tracking-widest text-ink-4">
-                  {paper.status} · {paper.year ?? "—"}
-                </span>
+                <span className="ml-3 inline-flex items-center gap-2 text-xs font-sans"><StatusBadge status={paper.status} /> {paper.year ?? "—"}</span>
               </button>
               <span className="text-xs text-ink-4">{paper.venue}</span>
               <button

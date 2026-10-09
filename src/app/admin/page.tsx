@@ -2,87 +2,36 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { format } from "date-fns";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
+import { AdminButton, AdminCard, AdminCardHeader, AdminPageHeader, StatusBadge } from "@/components/admin-ui";
 
-type DashboardStats = {
-  drafts: number;
-  scheduled: number;
-  webinarAnnouncements: number;
-  hiddenComments: number;
-  newComments: number;
-  views30d: number;
-};
+type DashboardStats = { drafts: number; scheduled: number; webinarAnnouncements: number; hiddenComments: number; newComments: number; views30d: number; published: number; papers: number; subscribers: number };
+type Activity = { posts: { id: string; title: string; status: string; updated_at: string }[]; comments: { id: string; author_name: string; body: string; created_at: string }[]; webinars: { id: string; title: string; starts_at: string }[] };
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [activity, setActivity] = useState<Activity | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-
   const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    const supabase = getSupabaseBrowser();
-    const since = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
-    const recentCommentsSince = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
-    const [drafts, scheduled, hidden, recent, views, webinars, announcements] = await Promise.all([
-      supabase.from("posts").select("id", { count: "exact", head: true }).eq("status", "draft"),
-      supabase.from("posts").select("id", { count: "exact", head: true }).eq("status", "scheduled"),
-      supabase.from("comments").select("id", { count: "exact", head: true }).eq("status", "hidden"),
-      supabase.from("comments").select("id", { count: "exact", head: true }).gte("created_at", recentCommentsSince),
-      supabase.from("page_views").select("id", { count: "exact", head: true }).gte("created_at", since),
-      supabase.from("webinars").select("id").eq("status", "upcoming"),
-      supabase.from("email_sends").select("webinar_id").eq("purpose", "webinar_announcement"),
+    setLoading(true); setError(""); const supabase = getSupabaseBrowser(); const since = new Date(Date.now() - 30 * 86400000).toISOString(); const recent = new Date(Date.now() - 7 * 86400000).toISOString();
+    const [drafts, scheduled, hidden, recentComments, views, webinars, announcements, published, papers, subscribers, posts, comments, upcoming] = await Promise.all([
+      supabase.from("posts").select("id", { count: "exact", head: true }).eq("status", "draft"), supabase.from("posts").select("id", { count: "exact", head: true }).eq("status", "scheduled"), supabase.from("comments").select("id", { count: "exact", head: true }).eq("status", "hidden"), supabase.from("comments").select("id", { count: "exact", head: true }).gte("created_at", recent), supabase.from("page_views").select("id", { count: "exact", head: true }).gte("created_at", since), supabase.from("webinars").select("id").eq("status", "upcoming"), supabase.from("email_sends").select("webinar_id").eq("purpose", "webinar_announcement"), supabase.from("posts").select("id", { count: "exact", head: true }).eq("status", "published"), supabase.from("papers").select("id", { count: "exact", head: true }), supabase.from("subscribers").select("id", { count: "exact", head: true }), supabase.from("posts").select("id,title,status,updated_at").order("updated_at", { ascending: false }).limit(5), supabase.from("comments").select("id,author_name,body,created_at").order("created_at", { ascending: false }).limit(5), supabase.from("webinars").select("id,title,starts_at").eq("status", "upcoming").order("starts_at", { ascending: true }).limit(5),
     ]);
-    const responses = [drafts, scheduled, hidden, recent, views, webinars, announcements];
-    const failed = responses.find((response) => response.error);
-    if (failed?.error) {
-      setError(`Could not load dashboard: ${failed.error.message}`);
-      setLoading(false);
-      return;
-    }
+    const responses = [drafts, scheduled, hidden, recentComments, views, webinars, announcements, published, papers, subscribers, posts, comments, upcoming]; const failed = responses.find((response) => response.error);
+    if (failed?.error) { setError(`Could not load dashboard: ${failed.error.message}`); setLoading(false); return; }
     const announced = new Set((announcements.data ?? []).map((row) => row.webinar_id).filter(Boolean));
-    const webinarAnnouncements = (webinars.data ?? []).filter((row) => !announced.has(row.id)).length;
-    setStats({
-      drafts: drafts.count ?? 0,
-      scheduled: scheduled.count ?? 0,
-      webinarAnnouncements,
-      hiddenComments: hidden.count ?? 0,
-      newComments: recent.count ?? 0,
-      views30d: views.count ?? 0,
-    });
-    setLoading(false);
+    setStats({ drafts: drafts.count ?? 0, scheduled: scheduled.count ?? 0, webinarAnnouncements: (webinars.data ?? []).filter((row) => !announced.has(row.id)).length, hiddenComments: hidden.count ?? 0, newComments: recentComments.count ?? 0, views30d: views.count ?? 0, published: published.count ?? 0, papers: papers.count ?? 0, subscribers: subscribers.count ?? 0 });
+    setActivity({ posts: posts.data ?? [], comments: comments.data ?? [], webinars: upcoming.data ?? [] }); setLoading(false);
   }, []);
-
   useEffect(() => { void load(); }, [load]);
-
-  const cards = [
-    { label: "Drafts", value: stats?.drafts, href: "/admin/posts?status=draft", tone: "ink" },
-    { label: "Scheduled posts", value: stats?.scheduled, href: "/admin/posts?status=scheduled", tone: "ink" },
-    { label: "Webinars without announcement", value: stats?.webinarAnnouncements, href: "/admin/webinars", tone: "ink" },
-    { label: "Hidden comments", value: stats?.hiddenComments, href: "/admin/comments?status=hidden", tone: "ink" },
-    { label: "New comments (7 days)", value: stats?.newComments, href: "/admin/comments", tone: "ink" },
-    { label: "Views (30 days)", value: stats?.views30d, href: "/admin/analytics", tone: "ink" },
-  ];
-
-  return (
-    <div>
-      <div className="flex flex-wrap items-baseline justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-ink-4">Studio overview</p>
-          <h1 className="mt-2 font-serif text-3xl tracking-tight text-ink">Dashboard</h1>
-        </div>
-        <button type="button" onClick={() => void load()} disabled={loading} className="text-xs text-ink-3 underline underline-offset-2 disabled:opacity-40">Refresh</button>
-      </div>
-      {error ? <div role="alert" className="mt-6 flex flex-wrap items-center justify-between gap-3 border border-red-700/40 bg-paper-2 px-4 py-3 text-sm text-red-700"><span>{error}</span><button type="button" onClick={() => void load()} className="underline underline-offset-2">Try again</button></div> : null}
-      <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map((card) => (
-          <Link key={card.label} href={card.href} className="border border-line p-5 transition-colors hover:bg-paper-2" style={{ borderRadius: 7 }}>
-            {loading ? <div className="h-9 w-16 animate-pulse rounded bg-paper-2" aria-label="Loading" /> : <p className="font-serif text-3xl tracking-tight text-ink">{card.value ?? 0}</p>}
-            <p className="mt-2 text-xs uppercase tracking-widest text-ink-4">{card.label}</p>
-          </Link>
-        ))}
-      </div>
-      <p className="mt-8 max-w-lg text-sm leading-relaxed text-ink-3">Start with the cards above: clear drafts, review scheduled posts, announce upcoming webinars, and moderate recent comments. Analytics counts only include visitors who accepted analytics cookies.</p>
-    </div>
-  );
+  const attention = [{ label: "Drafts", value: stats?.drafts, href: "/admin/posts?status=draft" }, { label: "Scheduled posts", value: stats?.scheduled, href: "/admin/posts?status=scheduled" }, { label: "Webinars awaiting announcement", value: stats?.webinarAnnouncements, href: "/admin/webinars" }, { label: "Hidden comments", value: stats?.hiddenComments, href: "/admin/comments?status=hidden" }];
+  const metrics = [{ label: "Published posts", value: stats?.published }, { label: "Papers", value: stats?.papers }, { label: "Subscribers", value: stats?.subscribers }, { label: "Views · 30 days", value: stats?.views30d }];
+  return <div className="space-y-6"><AdminPageHeader eyebrow="Overview" title="Dashboard" description="Manage your publication, community, and audience from one workspace." actions={<AdminButton onClick={() => void load()} disabled={loading} variant="secondary">Refresh</AdminButton>} />
+    {error ? <div role="alert" className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
+    <section><div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-semibold text-slate-900">Needs attention</h2><span className="text-xs text-slate-500">Actionable items</span></div><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{attention.map((card) => <Link key={card.label} href={card.href} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-indigo-300 hover:shadow"><p className="text-3xl font-semibold tracking-tight text-slate-950">{loading ? <span className="inline-block h-8 w-10 animate-pulse rounded bg-slate-100" /> : card.value ?? 0}</p><p className="mt-2 text-sm text-slate-500">{card.label}</p><p className="mt-4 text-xs font-semibold text-indigo-600">Review →</p></Link>)}</div></section>
+    <div className="grid gap-6 xl:grid-cols-[1fr_1fr]"> <AdminCard><AdminCardHeader title="Workspace metrics" description="Current content and audience totals" /><div className="grid grid-cols-2 divide-x divide-y divide-slate-200 sm:grid-cols-4 sm:divide-y-0">{metrics.map((metric) => <div key={metric.label} className="p-5"><p className="text-2xl font-semibold text-slate-950">{loading ? "—" : metric.value ?? 0}</p><p className="mt-1 text-xs text-slate-500">{metric.label}</p></div>)}</div></AdminCard><AdminCard><AdminCardHeader title="Quick actions" description="Start a common workflow" /><div className="grid grid-cols-2 gap-3 p-5"><Link href="/admin/posts/new" className="rounded-md border border-slate-200 p-4 text-sm font-medium text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700">New post</Link><Link href="/admin/papers" className="rounded-md border border-slate-200 p-4 text-sm font-medium text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700">Add paper</Link><Link href="/admin/webinars" className="rounded-md border border-slate-200 p-4 text-sm font-medium text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700">Add webinar</Link><Link href="/admin/comments" className="rounded-md border border-slate-200 p-4 text-sm font-medium text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700">Review comments</Link></div></AdminCard></div>
+    <div className="grid gap-6 xl:grid-cols-3"><AdminCard><AdminCardHeader title="Recently updated posts" action={<Link href="/admin/posts" className="text-xs font-semibold text-indigo-600">View all</Link>} /><div className="divide-y divide-slate-100">{activity?.posts.map((post) => <Link href={`/admin/posts/${post.id}`} key={post.id} className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-slate-50"><span className="truncate text-sm font-medium text-slate-700">{post.title || "Untitled"}</span><StatusBadge status={post.status} /></Link>) ?? <p className="p-5 text-sm text-slate-500">Loading activity…</p>}</div></AdminCard><AdminCard><AdminCardHeader title="Recent comments" action={<Link href="/admin/comments" className="text-xs font-semibold text-indigo-600">View all</Link>} /><div className="divide-y divide-slate-100">{activity?.comments.map((comment) => <div key={comment.id} className="px-5 py-3"><p className="truncate text-sm font-medium text-slate-700">{comment.author_name || "Reader"}</p><p className="mt-1 truncate text-xs text-slate-500">{comment.body}</p></div>) ?? <p className="p-5 text-sm text-slate-500">Loading activity…</p>}</div></AdminCard><AdminCard><AdminCardHeader title="Upcoming webinars" action={<Link href="/admin/webinars" className="text-xs font-semibold text-indigo-600">View all</Link>} /><div className="divide-y divide-slate-100">{activity?.webinars.map((webinar) => <div key={webinar.id} className="px-5 py-3"><p className="truncate text-sm font-medium text-slate-700">{webinar.title}</p><p className="mt-1 text-xs text-slate-500">{format(new Date(webinar.starts_at), "dd MMM yyyy, HH:mm")}</p></div>) ?? <p className="p-5 text-sm text-slate-500">Loading activity…</p>}</div></AdminCard></div>
+  </div>;
 }

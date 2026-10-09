@@ -8,6 +8,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/toast";
 import type { Webinar } from "@/lib/types";
 import { Mail, Plus, Trash2, X } from "lucide-react";
+import { AdminButton, AdminPageHeader, StatusBadge } from "@/components/admin-ui";
 
 const inputCls =
   "w-full border-0 border-b border-line bg-transparent px-0 py-2 text-sm text-ink outline-none transition-colors placeholder:text-ink-4 focus:border-ink";
@@ -43,21 +44,13 @@ export default function AdminWebinarsPage() {
 
   return (
     <div>
-      <div className="flex items-baseline justify-between">
-        <h1 className="font-serif text-3xl tracking-tight text-ink">Webinars</h1>
-        <button
-          onClick={() => setCreating(true)}
-          className="inline-flex items-center gap-1.5 rounded-full bg-ink px-5 py-2 text-sm text-paper transition-opacity hover:opacity-80"
-        >
-          <Plus className="h-4 w-4" /> New webinar
-        </button>
-      </div>
+      <AdminPageHeader eyebrow="Content" title="Webinars" description={`${webinars?.length ?? 0} sessions in your workspace.`} actions={<AdminButton onClick={() => setCreating(true)}><Plus className="mr-1.5 h-4 w-4" /> New webinar</AdminButton>} />
 
       {notice && (
         <p className="mt-4 border-t border-line pt-4 text-sm text-ink-3">{notice}</p>
       )}
 
-      <div className="mt-8">
+      <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white px-5 shadow-sm">
         {webinars === null ? (
           <p className="text-sm text-ink-3">Loading…</p>
         ) : webinars.length === 0 ? (
@@ -76,7 +69,7 @@ export default function AdminWebinarsPage() {
               >
                 {w.title}
                 <span className="ml-3 font-sans text-xs uppercase tracking-widest text-ink-4">
-                  {w.status}
+                  <StatusBadge status={w.status} />
                 </span>
               </button>
               <span className="text-xs text-ink-4">

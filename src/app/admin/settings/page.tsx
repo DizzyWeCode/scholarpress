@@ -1,4 +1,5 @@
 import { SITE, isSiteUrlConfigured } from "@/lib/site";
+import { AdminPageHeader } from "@/components/admin-ui";
 
 export const dynamic = "force-dynamic";
 
@@ -7,7 +8,7 @@ const siteUrlConfigured = isSiteUrlConfigured();
 export default function AdminSettingsPage() {
   return (
     <div>
-      <h1 className="font-serif text-3xl tracking-tight text-ink">Settings</h1>
+      <AdminPageHeader eyebrow="System" title="Settings" description="Configuration, launch readiness, and ownership details." />
 
       <div className="mt-8 space-y-8">
         {!siteUrlConfigured ? (

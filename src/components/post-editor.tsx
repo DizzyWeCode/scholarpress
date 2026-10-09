@@ -224,8 +224,8 @@ export function PostEditor({ post }: { post?: Post }) {
   ] as const;
 
   return (
-    <div className="space-y-10" onInput={() => { setDirty(true); setAutosaveState("idle"); }}>
-      <div>
+    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]" onInput={() => { setDirty(true); setAutosaveState("idle"); }}>
+      <div className="xl:col-start-1">
         <label className={labelCls} htmlFor="pe-title">Title</label>
         <input
           id="pe-title"
@@ -239,7 +239,7 @@ export function PostEditor({ post }: { post?: Post }) {
         />
       </div>
 
-      <div className="grid gap-8 sm:grid-cols-2">
+      <div className="grid gap-8 sm:grid-cols-2 xl:col-start-1">
         <div>
           <label className={labelCls} htmlFor="pe-slug">Slug (URL)</label>
           <input
@@ -264,7 +264,7 @@ export function PostEditor({ post }: { post?: Post }) {
         </div>
       </div>
 
-      <div>
+      <div className="xl:col-start-1">
         <label className={labelCls} htmlFor="pe-excerpt">Excerpt</label>
         <textarea
           id="pe-excerpt"
@@ -276,14 +276,14 @@ export function PostEditor({ post }: { post?: Post }) {
         />
       </div>
 
-      <div>
+      <div className="xl:col-start-1">
         <span className={labelCls}>Body</span>
         <div className="mt-2">
           <RichEditor initialContent={post?.content ?? null} onChange={(next) => { setContent(next); setDirty(true); setAutosaveState("idle"); }} />
         </div>
       </div>
 
-      <fieldset className="border border-line p-6" style={{ borderRadius: 7 }}>
+      <fieldset className="border border-slate-200 bg-white p-6 shadow-sm xl:col-start-1" style={{ borderRadius: 7 }}>
         <legend className="px-2 text-xs uppercase tracking-widest text-ink-4">
           Cover image &amp; attribution
         </legend>
@@ -324,7 +324,7 @@ export function PostEditor({ post }: { post?: Post }) {
         </div>
       </fieldset>
 
-      <fieldset className="border border-line p-6" style={{ borderRadius: 7 }}>
+      <fieldset className="border border-slate-200 bg-white p-6 shadow-sm xl:col-start-1" style={{ borderRadius: 7 }}>
         <legend className="px-2 text-xs uppercase tracking-widest text-ink-4">
           References
         </legend>
@@ -376,7 +376,7 @@ export function PostEditor({ post }: { post?: Post }) {
         </div>
       </fieldset>
 
-      <details open className="border border-line p-6" style={{ borderRadius: 7 }}>
+      <details open className="border border-slate-200 bg-white p-6 shadow-sm xl:sticky xl:top-24 xl:col-start-2 xl:row-start-1 xl:row-span-3" style={{ borderRadius: 7 }}>
         <summary className="cursor-pointer text-xs uppercase tracking-widest text-ink-4">Publish panel</summary>
         <div className="mt-5 grid gap-6 sm:grid-cols-2">
           <div>
@@ -394,7 +394,7 @@ export function PostEditor({ post }: { post?: Post }) {
         </div>
       </details>
 
-      <fieldset className="border border-line p-6" style={{ borderRadius: 7 }}>
+      <fieldset className="border border-slate-200 bg-white p-6 shadow-sm xl:col-start-2" style={{ borderRadius: 7 }}>
         <legend className="px-2 text-xs uppercase tracking-widest text-ink-4">
           SEO
         </legend>
@@ -410,9 +410,9 @@ export function PostEditor({ post }: { post?: Post }) {
         </div>
       </fieldset>
 
-      {message && <p className="text-sm text-red-700">{message}</p>}
+      {message && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 xl:col-start-2">{message}</p>}
 
-      <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-line bg-paper py-4">
+      <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-slate-200 bg-white py-4 xl:col-start-2">
         <span className="mr-auto text-xs text-ink-3" role="status" aria-live="polite">
           {autosaveState === "saving" ? "Saving…" : autosaveState === "failed" ? "Save failed" : autosaveState === "saved" && lastSaved ? `Saved at ${lastSaved.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : dirty ? "Unsaved changes" : "All changes saved"}
         </span>
