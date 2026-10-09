@@ -87,7 +87,7 @@ export function SiteNavigation() {
           </details>
         ))}
         <Link href="/#newsletter" className="ml-1 px-3 py-2 text-sm text-ink-3 transition-colors hover:text-ink">
-          Follow
+          Newsletter
         </Link>
       </nav>
 
@@ -127,7 +127,7 @@ export function SiteNavigation() {
               </details>
             ))}
             <Link href="/login" onClick={() => setMobileOpen(false)} className="block py-3.5 text-base text-ink-3">
-              Follow and sign in
+              Newsletter & sign in
             </Link>
           </div>
         </nav>
