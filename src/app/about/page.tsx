@@ -257,6 +257,13 @@ export default function AboutPage() {
               {SITE.email}
             </a>
           </p>
+          <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+            {SITE.researchgate ? <a href={SITE.researchgate} target="_blank" rel="noreferrer" className="underline underline-offset-2 transition-colors hover:text-ink">ResearchGate</a> : null}
+            {SITE.twitter ? <a href={SITE.twitter} target="_blank" rel="noreferrer" className="underline underline-offset-2 transition-colors hover:text-ink">X / Twitter</a> : null}
+            {SITE.linkedin ? <a href={SITE.linkedin} target="_blank" rel="noreferrer" className="underline underline-offset-2 transition-colors hover:text-ink">LinkedIn</a> : null}
+            {SITE.instagram ? <a href={SITE.instagram} target="_blank" rel="noreferrer" className="underline underline-offset-2 transition-colors hover:text-ink">Instagram</a> : null}
+            {SITE.youtube ? <a href={SITE.youtube} target="_blank" rel="noreferrer" className="underline underline-offset-2 transition-colors hover:text-ink">YouTube</a> : null}
+          </div>
         </div>
       </Reveal>
     </div>

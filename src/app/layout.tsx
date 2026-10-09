@@ -2,10 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { SITE, absoluteOgImage, absoluteUrl } from "@/lib/site";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
-import { CookieBanner } from "@/components/cookie-banner";
-import { AnalyticsTracker } from "@/components/analytics-tracker";
+import { SiteChrome } from "@/components/site-chrome";
 import { ToastProvider } from "@/components/toast";
 
 // Self-hosted variable subsets (latin) from Google Fonts — Inter & Newsreader,
@@ -64,11 +61,7 @@ export default function RootLayout({
           }}
         />
         <ToastProvider>
-          <SiteHeader />
-          <main id="main">{children}</main>
-          <SiteFooter />
-          <CookieBanner />
-          <AnalyticsTracker />
+          <SiteChrome>{children}</SiteChrome>
         </ToastProvider>
       </body>
     </html>

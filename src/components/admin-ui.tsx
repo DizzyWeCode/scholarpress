@@ -54,3 +54,24 @@ export function AdminButton({ children, variant = "primary", ...props }: React.B
 export function AdminInput({ className = "", ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={`min-h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 ${className}`} />;
 }
+
+export function AdminSpinner({ label = "Loading" }: { label?: string }) {
+  return <span role="status" aria-label={label} className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-indigo-600" />;
+}
+
+export function AdminListSkeleton({ rows = 4 }: { rows?: number }) {
+  return (
+    <div role="status" aria-label="Loading content" className="divide-y divide-slate-100">
+      {Array.from({ length: rows }).map((_, index) => (
+        <div key={index} className="flex items-center justify-between gap-4 px-5 py-5">
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-4 w-2/3 animate-pulse rounded bg-slate-100" />
+            <div className="h-3 w-1/3 animate-pulse rounded bg-slate-100" />
+          </div>
+          <div className="h-6 w-20 animate-pulse rounded-full bg-slate-100" />
+        </div>
+      ))}
+      <span className="sr-only">Loading content</span>
+    </div>
+  );
+}

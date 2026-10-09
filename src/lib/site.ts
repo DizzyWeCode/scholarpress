@@ -18,6 +18,9 @@ export const SITE = {
   researchgate: "https://www.researchgate.net/profile/Fraction-Dzinjalamala",
   twitter: "",
   linkedin: "",
+  instagram: "",
+  youtube: "",
+  facebook: "https://www.facebook.com/fraction.b.dzinjalamala/",
   // Studio credit shown in the footer — leave url empty to render as plain text
   builtBy: { name: "Akodi Ltd", url: "" },
   // Footer attribution note for imagery used across the site

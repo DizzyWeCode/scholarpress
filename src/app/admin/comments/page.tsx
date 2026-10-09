@@ -7,7 +7,7 @@ import { getSupabaseBrowser } from "@/lib/supabase/client";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useToast } from "@/components/toast";
 import type { Comment } from "@/lib/types";
-import { AdminPageHeader } from "@/components/admin-ui";
+import { AdminListSkeleton, AdminPageHeader } from "@/components/admin-ui";
 
 type CommentWithPost = Comment & {
   posts: { title: string; slug: string } | null;
@@ -135,7 +135,7 @@ export default function AdminCommentsPage() {
 
       <div className="mt-8">
         {comments === null ? (
-          <p className="text-sm text-ink-3">Loading…</p>
+          <AdminListSkeleton rows={5} />
         ) : visible.length === 0 ? (
           <p className="border-t border-line py-12 text-sm text-ink-3">
             No {filter === "all" ? "" : `${filter} `}comments yet.

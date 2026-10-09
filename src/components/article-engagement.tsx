@@ -347,7 +347,10 @@ export function ArticleEngagement({
       <section className="mt-14">
         <h2 className="font-serif text-2xl text-ink">Discussion</h2>
         {!authReady || loading ? (
-          <p className="mt-5 text-sm text-ink-3">Loading…</p>
+          <div role="status" aria-label="Loading discussion" className="mt-5 flex items-center gap-3 text-sm text-ink-3">
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-line border-t-ink" aria-hidden="true" />
+            <span>Loading discussion</span>
+          </div>
         ) : !userId ? (
           <div className="mt-5">{signInPrompt}</div>
         ) : (

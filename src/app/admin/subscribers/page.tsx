@@ -7,7 +7,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useToast } from "@/components/toast";
 import type { Subscriber } from "@/lib/types";
 import { Download, Trash2 } from "lucide-react";
-import { AdminButton, AdminPageHeader } from "@/components/admin-ui";
+import { AdminButton, AdminListSkeleton, AdminPageHeader } from "@/components/admin-ui";
 
 export default function AdminSubscribersPage() {
   const [subscribers, setSubscribers] = useState<Subscriber[] | null>(null);
@@ -53,7 +53,7 @@ export default function AdminSubscribersPage() {
       <AdminPageHeader eyebrow="Community" title="Subscribers" description={`${subscribers?.length ?? 0} newsletter subscribers.`} actions={<AdminButton variant="secondary" onClick={exportCsv}><Download className="mr-1.5 h-4 w-4" /> Export CSV</AdminButton>} />
       <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white px-5 shadow-sm">
         {subscribers === null ? (
-          <p className="text-sm text-ink-3">Loading…</p>
+          <AdminListSkeleton rows={5} />
         ) : subscribers.length === 0 ? (
           <p className="border-t border-line py-12 text-sm text-ink-3">
             No subscribers yet.

@@ -8,7 +8,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/toast";
 import type { Webinar } from "@/lib/types";
 import { Mail, Plus, Trash2, X } from "lucide-react";
-import { AdminButton, AdminPageHeader, StatusBadge } from "@/components/admin-ui";
+import { AdminButton, AdminListSkeleton, AdminPageHeader, StatusBadge } from "@/components/admin-ui";
 
 const inputCls =
   "w-full border-0 border-b border-line bg-transparent px-0 py-2 text-sm text-ink outline-none transition-colors placeholder:text-ink-4 focus:border-ink";
@@ -52,7 +52,7 @@ export default function AdminWebinarsPage() {
 
       <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white px-5 shadow-sm">
         {webinars === null ? (
-          <p className="text-sm text-ink-3">Loading…</p>
+          <AdminListSkeleton rows={4} />
         ) : webinars.length === 0 ? (
           <p className="border-t border-line py-12 text-sm text-ink-3">
             No webinars yet.

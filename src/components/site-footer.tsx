@@ -28,7 +28,12 @@ export function SiteFooter() {
               <li><Link className="text-paper/70 transition-colors hover:text-paper" href="/#newsletter">Newsletter</Link></li>
               <li><Link className="text-paper/70 transition-colors hover:text-paper" href="/login">Member account</Link></li>
               <li><a className="text-paper/70 transition-colors hover:text-paper" href={`mailto:${SITE.email}`}>Contact</a></li>
-              <li><a className="text-paper/70 transition-colors hover:text-paper" href={SITE.researchgate} target="_blank" rel="noreferrer">ResearchGate</a></li>
+              {SITE.researchgate ? <li><a className="text-paper/70 transition-colors hover:text-paper" href={SITE.researchgate} target="_blank" rel="noreferrer">ResearchGate</a></li> : null}
+              {SITE.twitter ? <li><a className="text-paper/70 transition-colors hover:text-paper" href={SITE.twitter} target="_blank" rel="noreferrer">X / Twitter</a></li> : null}
+              {SITE.linkedin ? <li><a className="text-paper/70 transition-colors hover:text-paper" href={SITE.linkedin} target="_blank" rel="noreferrer">LinkedIn</a></li> : null}
+              {SITE.instagram ? <li><a className="text-paper/70 transition-colors hover:text-paper" href={SITE.instagram} target="_blank" rel="noreferrer">Instagram</a></li> : null}
+              {SITE.youtube ? <li><a className="text-paper/70 transition-colors hover:text-paper" href={SITE.youtube} target="_blank" rel="noreferrer">YouTube</a></li> : null}
+              {SITE.facebook ? <li><a className="text-paper/70 transition-colors hover:text-paper" href={SITE.facebook} target="_blank" rel="noreferrer">Facebook</a></li> : null}
             </ul>
           </nav>
           <nav aria-label="Legal">
