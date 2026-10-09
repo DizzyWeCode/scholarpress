@@ -12,6 +12,7 @@ import { NewsletterForm } from "@/components/newsletter-form";
 import { ArticleEngagement } from "@/components/article-engagement";
 import { BookmarkButton } from "@/components/bookmark-button";
 import { CitationControl } from "@/components/citation-control";
+import { RelatedReads } from "@/components/related-reads";
 import { SITE, absoluteUrl } from "@/lib/site";
 import { excerptFromDoc, isAllowedImageHost } from "@/lib/utils";
 import type { Post } from "@/lib/types";
@@ -38,6 +39,17 @@ export default async function ArticlePage({
     .single();
   const post = (data as Post) ?? null;
   if (!post) notFound();
+
+  const related = post.tags.length > 0
+    ? await supabase
+        .from("posts")
+        .select("id, slug, title, excerpt, tags, reading_time_minutes")
+        .neq("slug", params.slug)
+        .overlaps("tags", post.tags)
+        .or(`status.eq.published,and(status.eq.scheduled,published_at.lte.${new Date().toISOString()})`)
+        .order("published_at", { ascending: false })
+        .limit(3)
+    : { data: [] };
 
   const url = absoluteUrl(`/blog/${post.slug}`);
 
@@ -153,6 +165,8 @@ export default async function ArticlePage({
       </div>
 
       <ArticleEngagement postId={post.id} initialLikes={post.like_count ?? 0} />
+
+      <RelatedReads posts={(related.data ?? []) as Array<{ id: string; slug: string; title: string; excerpt: string | null; tags: string[]; reading_time_minutes: number | null }>} currentTags={post.tags} />
 
       <div className="mt-14 rounded border border-line bg-paper-2 p-8" style={{ borderRadius: 7 }}>
         <p className="font-serif text-xl tracking-tight text-ink">
