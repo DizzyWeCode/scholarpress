@@ -44,3 +44,31 @@ export function slugify(input: string): string {
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 }
+
+export function normalizeDoi(input: string | null | undefined): string | null {
+  const value = input?.trim();
+  if (!value) return null;
+  const bare = value
+    .replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, "")
+    .replace(/^doi:\s*/i, "")
+    .trim();
+  return /^10\.\d{4,9}\/\S+$/i.test(bare) ? bare : null;
+}
+
+export function isAllowedImageHost(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" &&
+      (url.hostname === "images.unsplash.com" || url.hostname.endsWith(".supabase.co"));
+  } catch {
+    return false;
+  }
+}
+
+export function isWebinarPast(
+  webinar: { starts_at: string; duration_minutes: number | null },
+  now = Date.now(),
+): boolean {
+  const duration = Math.max(0, webinar.duration_minutes ?? 0) * 60_000;
+  return new Date(webinar.starts_at).getTime() + duration <= now;
+}

@@ -3,9 +3,12 @@
 import { useEffect, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Dialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/toast";
 import type { Paper } from "@/lib/types";
-import { Plus, Trash2, X } from "lucide-react";
+import { normalizeDoi } from "@/lib/utils";
+import { LoaderCircle, Plus, Trash2, X } from "lucide-react";
+import { AdminButton, AdminPageHeader, StatusBadge } from "@/components/admin-ui";
 
 const inputCls =
   "w-full border-0 border-b border-line bg-transparent px-0 py-2 text-sm text-ink outline-none transition-colors placeholder:text-ink-4 focus:border-ink";
@@ -53,19 +56,14 @@ export default function AdminPapersPage() {
 
   return (
     <div>
-      <div className="flex items-baseline justify-between">
-        <h1 className="font-serif text-3xl tracking-tight text-ink">Papers</h1>
-        <button
-          onClick={() => setCreating(true)}
-          className="inline-flex items-center gap-1.5 rounded-full bg-ink px-5 py-2 text-sm text-paper transition-opacity hover:opacity-80"
-        >
-          <Plus className="h-4 w-4" /> Add paper
-        </button>
-      </div>
+      <AdminPageHeader eyebrow="Content" title="Papers" description={`${papers?.length ?? 0} publications in your workspace.`} actions={<AdminButton onClick={() => setCreating(true)}><Plus className="mr-1.5 h-4 w-4" /> Add paper</AdminButton>} />
 
-      <div className="mt-8">
+      <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white px-5 shadow-sm">
         {papers === null ? (
-          <p className="text-sm text-ink-3">Loading…</p>
+          <p className="flex items-center gap-2 py-5 text-sm text-ink-3" role="status" aria-label="Loading papers">
+            <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
+            Loading papers
+          </p>
         ) : papers.length === 0 ? (
           <p className="border-t border-line py-12 text-sm text-ink-3">
             No papers yet.
@@ -81,9 +79,7 @@ export default function AdminPapersPage() {
                 className="text-left font-serif text-lg tracking-tight text-ink transition-opacity hover:opacity-60"
               >
                 {paper.title}
-                <span className="ml-3 text-xs font-sans uppercase tracking-widest text-ink-4">
-                  {paper.status} · {paper.year ?? "—"}
-                </span>
+                <span className="ml-3 inline-flex items-center gap-2 text-xs font-sans"><StatusBadge status={paper.status} /> {paper.year ?? "—"}</span>
               </button>
               <span className="text-xs text-ink-4">{paper.venue}</span>
               <button
@@ -148,10 +144,69 @@ function PaperForm({
     status: paper?.status ?? "published",
   });
   const [busy, setBusy] = useState(false);
+  const [fetchingDoi, setFetchingDoi] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
 
+  async function fetchFromDoi() {
+    const doi = normalizeDoi(form.doi);
+    if (!doi) {
+      setError("Enter a valid DOI such as 10.1000/example before fetching.");
+      return;
+    }
+    setError(null);
+    setFetchingDoi(true);
+    try {
+      const response = await fetch("/api/admin/papers/crossref", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ doi }),
+      });
+      const result = (await response.json()) as {
+        error?: string;
+        metadata?: {
+          title: string | null;
+          abstract: string | null;
+          authors: string[];
+          venue: string | null;
+          year: number | null;
+          doi: string;
+          url: string;
+        };
+      };
+      if (!response.ok || !result.metadata) {
+        setError(result.error ?? "Could not fetch DOI metadata.");
+        return;
+      }
+      const metadata = result.metadata;
+      setForm((current) => ({
+        ...current,
+        doi: metadata.doi,
+        title: current.title.trim() ? current.title : metadata.title ?? current.title,
+        abstract: current.abstract.trim() ? current.abstract : metadata.abstract ?? current.abstract,
+        authors: current.authors.trim() ? current.authors : metadata.authors.join(", "),
+        venue: current.venue.trim() ? current.venue : metadata.venue ?? current.venue,
+        year: current.year ?? metadata.year,
+        url: current.url.trim() ? current.url : metadata.url,
+      }));
+    } catch {
+      setError("Could not fetch DOI metadata. Check your connection and try again.");
+    } finally {
+      setFetchingDoi(false);
+    }
+  }
+
   async function save() {
-    if (!form.title.trim()) return;
+    if (!form.title.trim()) {
+      setError("Title is required.");
+      return;
+    }
+    const doi = normalizeDoi(form.doi);
+    if (form.doi.trim() && !doi) {
+      setError("Enter a valid DOI such as 10.1000/example.");
+      return;
+    }
+    setError(null);
     setBusy(true);
     const payload = {
       title: form.title.trim(),
@@ -159,7 +214,7 @@ function PaperForm({
       authors: form.authors.split(",").map((a) => a.trim()).filter(Boolean),
       venue: form.venue.trim() || null,
       year: form.year || null,
-      doi: form.doi.trim() || null,
+      doi,
       url: form.url.trim() || null,
       pdf_url: form.pdf_url.trim() || null,
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
@@ -172,68 +227,74 @@ function PaperForm({
       : await supabase.from("papers").insert(payload);
     setBusy(false);
     if (!error) onSaved();
+    else setError(error.message);
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/40 p-4" onClick={onClose}>
-      <div
-        className="mx-auto my-10 max-w-2xl bg-paper p-8"
-        style={{ borderRadius: 7 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif text-2xl tracking-tight text-ink">
-            {paper ? "Edit paper" : "New paper"}
-          </h2>
+    <Dialog open title={paper ? "Edit paper" : "New paper"} onClose={onClose}>
+      <div>
+        <div className="flex justify-end">
           <button onClick={onClose} aria-label="Close" className="p-1 text-ink-4 hover:text-ink">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="mt-6 grid gap-6">
           <div>
-            <label className={labelCls}>Title</label>
-            <input value={form.title} onChange={(e) => set("title", e.target.value)} className={`${inputCls} mt-2`} />
+            <label className={labelCls} htmlFor="paper-title">Title</label>
+            <input id="paper-title" value={form.title} onChange={(e) => set("title", e.target.value)} className={`${inputCls} mt-2`} />
           </div>
           <div>
-            <label className={labelCls}>Authors (comma separated)</label>
-            <input value={form.authors} onChange={(e) => set("authors", e.target.value)} placeholder="A. Moyo, J. Smith" className={`${inputCls} mt-2`} />
+            <label className={labelCls} htmlFor="paper-authors">Authors (comma separated)</label>
+            <input id="paper-authors" value={form.authors} onChange={(e) => set("authors", e.target.value)} placeholder="A. Moyo, J. Smith" className={`${inputCls} mt-2`} />
           </div>
           <div>
-            <label className={labelCls}>Abstract</label>
-            <textarea value={form.abstract} onChange={(e) => set("abstract", e.target.value)} rows={4} className={`${inputCls} mt-2 resize-y`} />
+            <label className={labelCls} htmlFor="paper-abstract">Abstract</label>
+            <textarea id="paper-abstract" value={form.abstract} onChange={(e) => set("abstract", e.target.value)} rows={4} className={`${inputCls} mt-2 resize-y`} />
           </div>
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
-              <label className={labelCls}>Venue (journal / conference)</label>
-              <input value={form.venue} onChange={(e) => set("venue", e.target.value)} className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="paper-venue">Venue (journal / conference)</label>
+              <input id="paper-venue" value={form.venue} onChange={(e) => set("venue", e.target.value)} className={`${inputCls} mt-2`} />
             </div>
             <div>
-              <label className={labelCls}>Year</label>
-              <input type="number" value={form.year ?? ""} onChange={(e) => set("year", e.target.value ? Number(e.target.value) : null)} className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="paper-year">Year</label>
+              <input id="paper-year" type="number" value={form.year ?? ""} onChange={(e) => set("year", e.target.value ? Number(e.target.value) : null)} className={`${inputCls} mt-2`} />
             </div>
           </div>
           <div className="grid gap-6 sm:grid-cols-3">
             <div>
-              <label className={labelCls}>DOI</label>
-              <input value={form.doi} onChange={(e) => set("doi", e.target.value)} placeholder="10.1000/xyz123" className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="paper-doi">DOI</label>
+              <div className="mt-2 flex items-center gap-2">
+                <input id="paper-doi" value={form.doi} onChange={(e) => set("doi", e.target.value)} placeholder="10.1000/xyz123" className={inputCls} />
+                <button
+                  type="button"
+                  onClick={() => void fetchFromDoi()}
+                  disabled={fetchingDoi || busy}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {fetchingDoi ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : null}
+                  {fetchingDoi ? "Fetching…" : "Fetch from DOI"}
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-ink-4">Crossref fills only blank fields; your edits are preserved.</p>
             </div>
             <div>
-              <label className={labelCls}>Publisher URL</label>
-              <input value={form.url} onChange={(e) => set("url", e.target.value)} className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="paper-url">Publisher URL</label>
+              <input id="paper-url" value={form.url} onChange={(e) => set("url", e.target.value)} className={`${inputCls} mt-2`} />
             </div>
             <div>
-              <label className={labelCls}>PDF URL</label>
-              <input value={form.pdf_url} onChange={(e) => set("pdf_url", e.target.value)} className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="paper-pdf-url">PDF URL</label>
+              <input id="paper-pdf-url" value={form.pdf_url} onChange={(e) => set("pdf_url", e.target.value)} className={`${inputCls} mt-2`} />
             </div>
           </div>
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
-              <label className={labelCls}>Tags (comma separated)</label>
-              <input value={form.tags} onChange={(e) => set("tags", e.target.value)} className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="paper-tags">Tags (comma separated)</label>
+              <input id="paper-tags" value={form.tags} onChange={(e) => set("tags", e.target.value)} className={`${inputCls} mt-2`} />
             </div>
             <div>
-              <label className={labelCls}>Status</label>
-              <select value={form.status} onChange={(e) => set("status", e.target.value)} className={`${inputCls} mt-2`}>
+              <label className={labelCls} htmlFor="paper-status">Status</label>
+              <select id="paper-status" value={form.status} onChange={(e) => set("status", e.target.value)} className={`${inputCls} mt-2`}>
                 <option value="published">Published</option>
                 <option value="draft">Draft</option>
               </select>
@@ -244,6 +305,7 @@ function PaperForm({
             Feature on homepage
           </label>
         </div>
+        {error ? <p role="alert" className="mt-5 text-sm text-red-700">{error}</p> : null}
         <div className="mt-8 flex gap-3">
           <button
             onClick={save}
@@ -257,6 +319,6 @@ function PaperForm({
           </button>
         </div>
       </div>
-    </div>
+    </Dialog>
   );
 }

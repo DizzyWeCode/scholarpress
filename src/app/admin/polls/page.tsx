@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
+import { AdminSpinner } from "@/components/admin-ui";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useToast } from "@/components/toast";
 import type { Poll, Post } from "@/lib/types";
@@ -360,7 +361,10 @@ export default function AdminPollsPage() {
 
       <div className="mt-10">
         {polls === null ? (
-          <p className="text-sm text-ink-3">Loading…</p>
+          <div role="status" aria-label="Loading polls" className="flex items-center gap-3 py-8 text-sm text-ink-3">
+            <AdminSpinner label="Loading polls" />
+            <span>Loading polls</span>
+          </div>
         ) : polls.length === 0 ? (
           <p className="border-t border-line py-12 text-sm text-ink-3">No polls yet.</p>
         ) : (

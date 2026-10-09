@@ -11,66 +11,45 @@ import { Reveal } from "@/components/reveal";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { ArticleEngagement } from "@/components/article-engagement";
 import { BookmarkButton } from "@/components/bookmark-button";
-import { SITE, absoluteOgImage, absoluteUrl } from "@/lib/site";
-import { excerptFromDoc } from "@/lib/utils";
+import { CitationControl } from "@/components/citation-control";
+import { RelatedReads } from "@/components/related-reads";
+import { SITE, absoluteUrl } from "@/lib/site";
+import { excerptFromDoc, isAllowedImageHost } from "@/lib/utils";
 import type { Post } from "@/lib/types";
 
 export const revalidate = 60;
 
-async function getPost(slug: string): Promise<Post | null> {
-  const supabase = getSupabaseAnon();
-  if (!supabase) return null;
-  const { data } = await supabase
-    .from("posts")
-    .select("*")
-    .eq("slug", slug)
-    .eq("status", "published")
-    .single();
-  return (data as Post) ?? null;
-}
-
-export async function generateMetadata({
-  params,
-}: {
-  params: { slug: string };
-}): Promise<Metadata> {
-  const post = await getPost(params.slug);
-  if (!post) return { title: "Article not found" };
-  const description =
-    post.seo_description ?? post.excerpt ?? excerptFromDoc(post.content);
-  const title = post.seo_title ?? post.title;
-  const url = absoluteUrl(`/blog/${post.slug}`);
-  const ogImage = absoluteOgImage(post.cover_image_url);
-  return {
-    title,
-    description,
-    alternates: { canonical: url },
-    openGraph: {
-      type: "article",
-      title,
-      description,
-      url,
-      publishedTime: post.published_at ?? undefined,
-      authors: [SITE.name],
-      tags: post.tags,
-      images: [{ url: ogImage, alt: post.title }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [ogImage],
-    },
-  };
-}
+export const metadata: Metadata = {
+  title: "Writing",
+  description: "Writing from Dr Fraction Dzinjalamala.",
+};
 
 export default async function ArticlePage({
   params,
 }: {
   params: { slug: string };
 }) {
-  const post = await getPost(params.slug);
+  const supabase = getSupabaseAnon();
+  if (!supabase) notFound();
+  const { data } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("slug", params.slug)
+    .or(`status.eq.published,and(status.eq.scheduled,published_at.lte.${new Date().toISOString()})`)
+    .single();
+  const post = (data as Post) ?? null;
   if (!post) notFound();
+
+  const related = post.tags.length > 0
+    ? await supabase
+        .from("posts")
+        .select("id, slug, title, excerpt, tags, reading_time_minutes")
+        .neq("slug", params.slug)
+        .overlaps("tags", post.tags)
+        .or(`status.eq.published,and(status.eq.scheduled,published_at.lte.${new Date().toISOString()})`)
+        .order("published_at", { ascending: false })
+        .limit(3)
+    : { data: [] };
 
   const url = absoluteUrl(`/blog/${post.slug}`);
 
@@ -84,24 +63,26 @@ export default async function ArticlePage({
     image: post.cover_image_url ?? undefined,
     mainEntityOfPage: url,
   };
+  const jsonLdString = JSON.stringify(jsonLd).replace(/</g, "\\u003c");
 
   return (
     <article className="mx-auto max-w-3xl px-5 py-16 sm:px-8 sm:py-24">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdString }}
       />
       <Reveal>
         <Link
           href="/blog"
           className="text-xs uppercase tracking-widest text-ink-4 transition-colors hover:text-ink"
         >
-          ← All articles
+          ← All writing
         </Link>
         <h1 className="mt-6 font-serif text-4xl leading-[1.12] tracking-[-0.015em] text-ink sm:text-5xl">
           {post.title}
         </h1>
-        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-3">
+          {post.excerpt ? <p className="mt-5 max-w-2xl text-lg leading-relaxed text-ink-3">{post.excerpt}</p> : null}
+          <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-3">
           <span>{SITE.name}</span>
           <span aria-hidden>·</span>
           {post.published_at ? (
@@ -129,14 +110,19 @@ export default async function ArticlePage({
       {post.cover_image_url ? (
         <Reveal delay={120}>
           <figure className="mt-12">
-            <Image
-              src={post.cover_image_url}
-              alt={post.title}
-              width={1200}
-              height={675}
-              className="rounded"
-              priority
-            />
+            {isAllowedImageHost(post.cover_image_url) ? (
+              <Image
+                src={post.cover_image_url}
+                alt={post.title}
+                width={1200}
+                height={675}
+                className="rounded"
+                priority
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={post.cover_image_url} alt={post.title} width={1200} height={675} className="rounded" />
+            )}
             {post.cover_image_credit ? (
               <figcaption className="mt-2 text-xs text-ink-4">
                 {post.cover_image_credit_url ? (
@@ -168,7 +154,19 @@ export default async function ArticlePage({
         <BookmarkButton postId={post.id} />
       </div>
 
+      <div className="mt-8">
+        <CitationControl
+          title={post.title}
+          authors={[SITE.name]}
+          year={post.published_at ? new Date(post.published_at).getFullYear() : null}
+          url={url}
+          citationKey={`article${post.slug}`}
+        />
+      </div>
+
       <ArticleEngagement postId={post.id} initialLikes={post.like_count ?? 0} />
+
+      <RelatedReads posts={(related.data ?? []) as Array<{ id: string; slug: string; title: string; excerpt: string | null; tags: string[]; reading_time_minutes: number | null }>} currentTags={post.tags} />
 
       <div className="mt-14 rounded border border-line bg-paper-2 p-8" style={{ borderRadius: 7 }}>
         <p className="font-serif text-xl tracking-tight text-ink">

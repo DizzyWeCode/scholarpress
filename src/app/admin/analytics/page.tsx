@@ -12,6 +12,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { AdminPageHeader } from "@/components/admin-ui";
 
 type Range = 7 | 30 | 90;
 
@@ -72,10 +73,11 @@ export default function AdminAnalyticsPage() {
             <button
               key={r}
               onClick={() => setRange(r)}
-              className={`rounded-full border px-4 py-1.5 text-xs transition-colors ${
+              aria-pressed={range === r}
+              className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
                 range === r
-                  ? "border-ink bg-ink text-paper"
-                  : "border-line text-ink-3 hover:border-ink hover:text-ink"
+                  ? "bg-indigo-600 text-white"
+                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
               }`}
             >
               {r}d
@@ -98,36 +100,43 @@ export default function AdminAnalyticsPage() {
             <LineChart data={daily} margin={{ top: 4, right: 4, bottom: 0, left: -18 }}>
               <XAxis
                 dataKey="day"
-                tick={{ fontSize: 11, fill: "#9c9c9c" }}
-                axisLine={{ stroke: "#e5e5e5" }}
+                tick={{ fontSize: 11, fill: "var(--color-ink-4)" }}
+                axisLine={{ stroke: "var(--color-line)" }}
                 tickLine={false}
                 interval="preserveStartEnd"
               />
               <YAxis
                 allowDecimals={false}
-                tick={{ fontSize: 11, fill: "#9c9c9c" }}
+                tick={{ fontSize: 11, fill: "var(--color-ink-4)" }}
                 axisLine={false}
                 tickLine={false}
               />
               <Tooltip
                 contentStyle={{
-                  background: "#0a0a0a",
+                  background: "var(--color-ink)",
                   border: "none",
                   borderRadius: 7,
-                  color: "#fafafa",
+                  color: "var(--color-paper)",
                   fontSize: 12,
                 }}
-                labelStyle={{ color: "#9c9c9c" }}
+                labelStyle={{ color: "var(--color-ink-4)" }}
               />
               <Line
                 type="monotone"
                 dataKey="views"
-                stroke="#0a0a0a"
+                stroke="var(--color-ink)"
                 strokeWidth={1.5}
                 dot={false}
               />
             </LineChart>
           </ResponsiveContainer>
+        </div>
+        <div className="sr-only">
+          <table>
+            <caption>Daily page views for the last {range} days</caption>
+            <thead><tr><th scope="col">Day</th><th scope="col">Views</th></tr></thead>
+            <tbody>{daily.map((row) => <tr key={row.day}><th scope="row">{row.day}</th><td>{row.views}</td></tr>)}</tbody>
+          </table>
         </div>
       </div>
 

@@ -5,11 +5,11 @@ import { Reveal } from "@/components/reveal";
 import { getSupabaseAnon } from "@/lib/supabase/public";
 import type { Post } from "@/lib/types";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Articles",
-  description: "Essays and long-form articles.",
+  description: "Essays, notes, reviews, and public thinking from Dr Fraction Dzinjalamala.",
 };
 
 export default async function BlogPage({
@@ -22,10 +22,8 @@ export default async function BlogPage({
   if (supabase) {
     const { data } = await supabase
       .from("posts")
-      .select(
-        "id, slug, title, excerpt, tags, status, published_at, reading_time_minutes, updated_at",
-      )
-      .eq("status", "published")
+      .select("id, slug, title, excerpt, tags, status, published_at, reading_time_minutes, updated_at, cover_image_url")
+      .or(`status.eq.published,and(status.eq.scheduled,published_at.lte.${new Date().toISOString()})`)
       .order("published_at", { ascending: false });
     posts = (data ?? []) as Post[];
   }
@@ -42,13 +40,12 @@ export default async function BlogPage({
   return (
     <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
       <Reveal>
-        <p className="text-xs uppercase tracking-[0.25em] text-ink-4">Articles</p>
+        <p className="text-xs uppercase tracking-[0.25em] text-ink-4">Writing</p>
         <h1 className="mt-4 font-serif text-4xl tracking-tight text-ink sm:text-6xl">
-          Essays &amp; articles
+          Essays, notes, and ideas
         </h1>
         <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-3">
-          Long-form articles on research, methods, and the ideas in between.
-          Every piece carries its sources at the end.
+          Public thinking from Dr Fraction: long-form essays, shorter notes, reviews, and the ideas connecting the work.
         </p>
       </Reveal>
 

@@ -12,18 +12,24 @@ export function SubscribeButton() {
   const router = useRouter();
 
   useEffect(() => {
-    const supabase = getSupabaseBrowser();
-    supabase.auth.getUser().then(({ data }) => {
-      setSignedIn(Boolean(data.user));
+    try {
+      const supabase = getSupabaseBrowser();
+      supabase.auth.getUser().then(({ data }) => {
+        setSignedIn(Boolean(data.user));
+        setReady(true);
+      });
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        setSignedIn(Boolean(session?.user));
+        setReady(true);
+      });
+      return () => subscription.unsubscribe();
+    } catch {
+      // Keep the public shell usable in previews where Supabase is not configured.
       setReady(true);
-    });
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSignedIn(Boolean(session?.user));
-      setReady(true);
-    });
-    return () => subscription.unsubscribe();
+      return undefined;
+    }
   }, []);
 
   async function signOut() {

@@ -1,10 +1,25 @@
-import { format } from "date-fns";
 import type { Webinar } from "@/lib/types";
-import { CalendarDays, Clock, MonitorPlay } from "lucide-react";
+import { isWebinarPast } from "@/lib/utils";
+import { CalendarDays, Clock, Download, MonitorPlay } from "lucide-react";
+
+const dateFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Africa/Blantyre",
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+});
+const timeFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Africa/Blantyre",
+  weekday: "long",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
 
 export function WebinarCard({ webinar, dark = false }: { webinar: Webinar; dark?: boolean }) {
   const starts = new Date(webinar.starts_at);
-  const isUpcoming = webinar.status === "upcoming";
+  const isPast = webinar.status === "past" || (webinar.status === "upcoming" && isWebinarPast(webinar));
+  const isUpcoming = webinar.status === "upcoming" && !isPast;
   return (
     <article
       className={`flex flex-col gap-4 border p-7 ${
@@ -18,15 +33,13 @@ export function WebinarCard({ webinar, dark = false }: { webinar: Webinar; dark?
             dark ? "border-paper/30 text-paper/70" : "border-line text-ink-3"
           }`}
         >
-          {isUpcoming ? "Upcoming" : webinar.status === "past" ? "Recording" : "Draft"}
+          {isUpcoming ? "Upcoming" : isPast ? "Recording" : "Draft"}
         </span>
         <span className={`text-xs ${dark ? "text-paper/50" : "text-ink-4"}`}>
-          {format(starts, "dd MMM yyyy")}
+          {dateFormatter.format(starts)}
         </span>
       </div>
-      <h3 className="font-serif text-2xl leading-snug tracking-tight">
-        {webinar.title}
-      </h3>
+      <h3 className="font-serif text-2xl leading-snug tracking-tight">{webinar.title}</h3>
       {webinar.description ? (
         <p className={`text-sm leading-relaxed ${dark ? "text-paper/60" : "text-ink-3"}`}>
           {webinar.description}
@@ -35,7 +48,7 @@ export function WebinarCard({ webinar, dark = false }: { webinar: Webinar; dark?
       <div className={`mt-auto flex flex-wrap gap-x-5 gap-y-2 text-xs ${dark ? "text-paper/50" : "text-ink-3"}`}>
         <span className="inline-flex items-center gap-1.5">
           <CalendarDays className="h-3.5 w-3.5" />
-          {format(starts, "EEEE, HH:mm")}
+          {timeFormatter.format(starts)} CAT
         </span>
         {webinar.duration_minutes ? (
           <span className="inline-flex items-center gap-1.5">
@@ -62,7 +75,15 @@ export function WebinarCard({ webinar, dark = false }: { webinar: Webinar; dark?
           Register free
         </a>
       ) : null}
-      {!isUpcoming && webinar.recording_url ? (
+      {isUpcoming ? (
+        <a
+          href={`/api/webinars/${webinar.id}/ics`}
+          className={`inline-flex w-fit items-center gap-2 text-xs underline underline-offset-2 ${dark ? "text-paper/70" : "text-ink-3"}`}
+        >
+          <Download className="h-3.5 w-3.5" /> Add to calendar
+        </a>
+      ) : null}
+      {isPast && webinar.recording_url ? (
         <a
           href={webinar.recording_url}
           target="_blank"

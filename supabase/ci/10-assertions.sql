@@ -126,6 +126,7 @@ begin
     'public.handle_new_user',
     'public.protect_profile_fields',
     'public.set_comment_author_name',
+    'public.protect_comment_fields',
     'public.refresh_comment_like_count',
     'public.refresh_post_like_count',
     'public.refresh_poll_option_vote_count',
@@ -143,6 +144,7 @@ begin
       ('auth',        'users',              'on_auth_user_created'),
       ('public',      'profiles',           'profiles_protect_fields'),
       ('public',      'comments',           'comments_set_author_name'),
+      ('public',      'comments',           'comments_protect_fields'),
       ('public',      'comment_likes',      'comment_likes_refresh_count'),
       ('public',      'post_likes',         'post_likes_refresh_count'),
       ('public',      'poll_votes',          'poll_votes_refresh_count')
@@ -244,10 +246,18 @@ do $$
 declare
   n bigint;
   draft_id uuid;
+  future_scheduled_id uuid;
+  past_scheduled_id uuid;
 begin
   insert into public.posts (slug, title, excerpt, status)
   values ('ci-rls-draft', 'CI RLS draft', 'not for public eyes', 'draft')
   returning id into draft_id;
+  insert into public.posts (slug, title, status, published_at)
+  values ('ci-future-scheduled', 'CI future scheduled', 'scheduled', now() + interval '1 day')
+  returning id into future_scheduled_id;
+  insert into public.posts (slug, title, status, published_at)
+  values ('ci-past-scheduled', 'CI past scheduled', 'scheduled', now() - interval '1 day')
+  returning id into past_scheduled_id;
 
   set role anon;
 
@@ -279,6 +289,12 @@ begin
   if exists (select 1 from public.posts where id = draft_id) then
     raise exception 'RLS leak: anon could read a draft post';
   end if;
+  if exists (select 1 from public.posts where id = future_scheduled_id) then
+    raise exception 'RLS leak: anon could read a future scheduled post';
+  end if;
+  if not exists (select 1 from public.posts where id = past_scheduled_id) then
+    raise exception 'RLS regression: anon could not read a past scheduled post';
+  end if;
 
   select count(*) into n from public.posts where status = 'published';
   if n = 0 then
@@ -299,9 +315,105 @@ begin
 
   delete from public.subscribers where email = 'ci-smoke@example.org';
   delete from public.page_views where path = '/ci-rls-smoke-test';
-  delete from public.posts where id = draft_id;
+  delete from public.posts where id in (draft_id, future_scheduled_id, past_scheduled_id);
 
   raise notice 'OK — RLS smoke test passed for role anon';
+end
+$$;
+
+-- ---------- 9. Behavioral RLS tests for authenticated users ----------
+do $$
+declare
+  test_user uuid := '20000000-0000-0000-0000-000000000001';
+  post_a uuid;
+  post_b uuid;
+  root_comment uuid;
+  test_poll_id uuid;
+  test_option_id uuid;
+begin
+  insert into auth.users (id, email, raw_user_meta_data)
+  values (test_user, 'rls-user@example.org', '{"full_name":"RLS User"}')
+  on conflict (id) do nothing;
+
+  insert into public.posts (slug, title, status)
+  values ('ci-rls-published-a', 'CI RLS published A', 'published')
+  on conflict (slug) do update set status = 'published'
+  returning id into post_a;
+  insert into public.posts (slug, title, status)
+  values ('ci-rls-published-b', 'CI RLS published B', 'published')
+  on conflict (slug) do update set status = 'published'
+  returning id into post_b;
+  insert into public.polls (post_id, question, status)
+  values (post_a, 'CI RLS poll', 'open')
+  returning id into test_poll_id;
+  insert into public.poll_options (poll_id, label)
+  values (test_poll_id, 'Option A')
+  returning id into test_option_id;
+
+  perform set_config('request.jwt.claim.sub', test_user::text, true);
+  perform set_config('request.jwt.claims', json_build_object('sub', test_user::text, 'email', 'rls-user@example.org')::text, true);
+  set local role authenticated;
+
+  insert into public.comments (post_id, user_id, body, status)
+  values (post_a, test_user, 'CI top-level comment', 'visible')
+  returning id into root_comment;
+  insert into public.comments (post_id, parent_id, user_id, body, status)
+  values (post_a, root_comment, test_user, 'CI reply on same post', 'visible');
+
+  begin
+    insert into public.comments (post_id, parent_id, user_id, body, status)
+    values (post_b, root_comment, test_user, 'CI cross-post reply', 'visible');
+    raise exception 'Cross-post reply unexpectedly succeeded';
+  exception when others then
+    if sqlerrm = 'Cross-post reply unexpectedly succeeded' then raise; end if;
+  end;
+
+  begin
+    update public.comments set like_count = 99 where id = root_comment;
+    raise exception 'Comment like_count tampering unexpectedly succeeded';
+  exception when others then
+    if sqlerrm = 'Comment like_count tampering unexpectedly succeeded' then raise; end if;
+  end;
+
+  begin
+    update public.profiles set role = 'owner' where id = test_user;
+    raise exception 'Profile role escalation unexpectedly succeeded';
+  exception when others then
+    if sqlerrm = 'Profile role escalation unexpectedly succeeded' then raise; end if;
+  end;
+
+  reset role;
+  set local role anon;
+  begin
+    insert into public.comments (post_id, user_id, body, status)
+    values (post_a, test_user, 'CI anon comment', 'visible');
+    raise exception 'Anon comment insert unexpectedly succeeded';
+  exception when others then
+    if sqlerrm = 'Anon comment insert unexpectedly succeeded' then raise; end if;
+  end;
+  begin
+    insert into public.post_likes (post_id, user_id) values (post_a, test_user);
+    raise exception 'Anon post like insert unexpectedly succeeded';
+  exception when others then
+    if sqlerrm = 'Anon post like insert unexpectedly succeeded' then raise; end if;
+  end;
+  begin
+    insert into public.poll_votes (poll_id, option_id, user_id)
+    values (test_poll_id, test_option_id, test_user);
+    raise exception 'Anon poll vote insert unexpectedly succeeded';
+  exception when others then
+    if sqlerrm = 'Anon poll vote insert unexpectedly succeeded' then raise; end if;
+  end;
+
+  reset role;
+  delete from public.poll_votes where public.poll_votes.poll_id = test_poll_id;
+  delete from public.poll_options where public.poll_options.id = test_option_id;
+  delete from public.polls where public.polls.id = test_poll_id;
+  delete from public.comments where post_id in (post_a, post_b);
+  delete from public.posts where id in (post_a, post_b);
+  delete from auth.users where id = test_user;
+
+  raise notice 'OK — behavioral authenticated and anonymous RLS tests passed';
 end
 $$;
 

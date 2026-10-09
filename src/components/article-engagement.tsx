@@ -52,7 +52,12 @@ export function ArticleEngagement({
           .eq("post_id", postId)
           .order("created_at", { ascending: true }),
         id
-          ? supabase.from("post_likes").select("post_id").eq("post_id", postId).maybeSingle()
+          ? supabase
+              .from("post_likes")
+              .select("post_id")
+              .eq("post_id", postId)
+              .eq("user_id", id)
+              .maybeSingle()
           : Promise.resolve({ data: null, error: null }),
         supabase
           .from("polls")
@@ -146,7 +151,7 @@ export function ArticleEngagement({
       console.error("togglePostLike failed", err);
       setLiked(previousLiked);
       setLikes((count) => Math.max(0, count + (previousLiked ? 1 : -1)));
-      setError("Your like could not be saved. Please try again.");
+      setError(`Your like could not be saved: ${err instanceof Error ? err.message : "Please try again."}`);
     } finally {
       setBusy(false);
     }
@@ -174,8 +179,9 @@ export function ArticleEngagement({
       await load();
     } catch (err) {
       console.error("addComment failed", err);
-      setError("Your comment could not be posted. Please try again.");
-      push({ kind: "error", title: "Could not post comment", body: "Please try again." });
+      const message = err instanceof Error ? err.message : "Please try again.";
+      setError(`Your comment could not be posted: ${message}`);
+      push({ kind: "error", title: "Could not post comment", body: message });
     } finally {
       setBusy(false);
     }
@@ -201,7 +207,7 @@ export function ArticleEngagement({
       await load();
     } catch (err) {
       console.error("toggleCommentLike failed", err);
-      setError("Your reaction could not be saved. Please try again.");
+      setError(`Your reaction could not be saved: ${err instanceof Error ? err.message : "Please try again."}`);
     } finally {
       setBusy(false);
     }
@@ -251,7 +257,7 @@ export function ArticleEngagement({
       await load();
     } catch (err) {
       console.error("vote failed", err);
-      setError("Your vote could not be recorded. Please try again.");
+      setError(`Your vote could not be recorded: ${err instanceof Error ? err.message : "Please try again."}`);
     } finally {
       setBusy(false);
     }
@@ -282,7 +288,8 @@ export function ArticleEngagement({
 
       {error ? (
         <p
-          role="alert"
+          role="status"
+          aria-live="polite"
           className="mt-6 border border-ink/30 bg-paper-2 px-4 py-3 text-sm text-ink"
           style={{ borderRadius: 7 }}
         >
@@ -340,7 +347,10 @@ export function ArticleEngagement({
       <section className="mt-14">
         <h2 className="font-serif text-2xl text-ink">Discussion</h2>
         {!authReady || loading ? (
-          <p className="mt-5 text-sm text-ink-3">Loading…</p>
+          <div role="status" aria-label="Loading discussion" className="mt-5 flex items-center gap-3 text-sm text-ink-3">
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-line border-t-ink" aria-hidden="true" />
+            <span>Loading discussion</span>
+          </div>
         ) : !userId ? (
           <div className="mt-5">{signInPrompt}</div>
         ) : (

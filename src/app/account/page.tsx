@@ -57,6 +57,8 @@ export default function AccountPage() {
   // Newsletter
   const [subscribed, setSubscribed] = useState<boolean | null>(null);
   const [format, setFormat] = useState("all");
+  const [subscriptionBusy, setSubscriptionBusy] = useState(false);
+  const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
 
   // Activity
   const [saved, setSaved] = useState<SavedRow[]>([]);
@@ -134,8 +136,10 @@ export default function AccountPage() {
   }
 
   async function toggleSubscription() {
-    if (!user?.email) return;
+    if (!user?.email || subscriptionBusy) return;
     const supabase = getSupabaseBrowser();
+    setSubscriptionBusy(true);
+    setSubscriptionError(null);
     try {
       if (subscribed) {
         const { error } = await supabase.from("subscribers").delete().eq("email", user.email);
@@ -149,7 +153,11 @@ export default function AccountPage() {
       setSubscribed(!subscribed);
     } catch (err) {
       console.error("subscription toggle failed", err);
-      push({ kind: "error", title: "Could not update subscription", body: "Please try again." });
+      const message = err instanceof Error ? err.message : "Please try again.";
+      setSubscriptionError(`Could not update subscription: ${message}`);
+      push({ kind: "error", title: "Could not update subscription", body: message });
+    } finally {
+      setSubscriptionBusy(false);
     }
   }
 
@@ -297,9 +305,10 @@ export default function AccountPage() {
             ))}
           </div>
           <p className="mt-3 text-xs text-ink-4">Preference is stored on your profile; choosing “none” is the same as unsubscribing.</p>
+          {subscriptionError ? <p role="status" aria-live="polite" className="mt-3 text-sm text-red-700">{subscriptionError}</p> : null}
           <div className="mt-4 flex gap-3">
             <button onClick={() => void saveProfile(new Event("submit") as unknown as React.FormEvent)} disabled={saving} className="bg-ink px-4 py-2 text-sm text-paper disabled:opacity-50">Save preferences</button>
-            <button onClick={() => void toggleSubscription()} className="border border-line px-4 py-2 text-sm text-ink hover:border-ink">{subscribed ? "Unsubscribe" : "Subscribe"}</button>
+            <button onClick={() => void toggleSubscription()} disabled={subscriptionBusy} className="border border-line px-4 py-2 text-sm text-ink hover:border-ink disabled:opacity-50">{subscriptionBusy ? "Saving…" : subscribed ? "Unsubscribe" : "Subscribe"}</button>
           </div>
         </div>
       )}

@@ -20,7 +20,7 @@ function SectionTitle({ children }: { children: string }) {
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-3xl px-5 py-20 sm:px-8">
-      {/* Identity block — portrait slot; replace /covers/field-notes.png with a real portrait */}
+      {/* Identity block — replace the temporary field-notes image with a real portrait when available. */}
       <Reveal>
         <p className="text-xs uppercase tracking-[0.25em] text-ink-4">About</p>
         <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-start">
@@ -35,7 +35,7 @@ export default function AboutPage() {
               />
             </span>
             <figcaption className="mt-2 max-w-32 text-[11px] leading-snug text-ink-4">
-              Portrait slot
+              Dr Fraction Dzinjalamala
             </figcaption>
           </figure>
           <div>
@@ -163,7 +163,7 @@ export default function AboutPage() {
       </Reveal>
 
       <Reveal delay={160}>
-        <div className="mt-12 border-t border-line pt-10">
+        <div id="research" className="mt-12 scroll-mt-24 border-t border-line pt-10">
           <SectionTitle>Research interests</SectionTitle>
           <ul className="mt-5 grid gap-x-8 gap-y-3 text-sm leading-relaxed text-ink-2 sm:grid-cols-2">
             {[
@@ -230,7 +230,7 @@ export default function AboutPage() {
       </Reveal>
 
       <Reveal delay={220}>
-        <div className="mt-12 border-t border-line pt-10">
+        <div id="work-with-me" className="mt-12 scroll-mt-24 border-t border-line pt-10">
           <SectionTitle>Teaching & outreach</SectionTitle>
           <p className="mt-4 text-sm leading-relaxed text-ink-2">
             Pharmacology teaching across diploma programmes in nursing,
@@ -257,6 +257,13 @@ export default function AboutPage() {
               {SITE.email}
             </a>
           </p>
+          <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+            {SITE.researchgate ? <a href={SITE.researchgate} target="_blank" rel="noreferrer" className="underline underline-offset-2 transition-colors hover:text-ink">ResearchGate</a> : null}
+            {SITE.twitter ? <a href={SITE.twitter} target="_blank" rel="noreferrer" className="underline underline-offset-2 transition-colors hover:text-ink">X / Twitter</a> : null}
+            {SITE.linkedin ? <a href={SITE.linkedin} target="_blank" rel="noreferrer" className="underline underline-offset-2 transition-colors hover:text-ink">LinkedIn</a> : null}
+            {SITE.instagram ? <a href={SITE.instagram} target="_blank" rel="noreferrer" className="underline underline-offset-2 transition-colors hover:text-ink">Instagram</a> : null}
+            {SITE.youtube ? <a href={SITE.youtube} target="_blank" rel="noreferrer" className="underline underline-offset-2 transition-colors hover:text-ink">YouTube</a> : null}
+          </div>
         </div>
       </Reveal>
     </div>

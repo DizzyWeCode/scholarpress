@@ -7,6 +7,7 @@ import { getSupabaseBrowser } from "@/lib/supabase/client";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useToast } from "@/components/toast";
 import type { Comment } from "@/lib/types";
+import { AdminListSkeleton, AdminPageHeader } from "@/components/admin-ui";
 
 type CommentWithPost = Comment & {
   posts: { title: string; slug: string } | null;
@@ -104,16 +105,9 @@ export default function AdminCommentsPage() {
 
   return (
     <div>
-      <div className="flex items-baseline justify-between">
-        <h1 className="font-serif text-3xl tracking-tight text-ink">
-          Comments{comments ? ` (${comments.length})` : ""}
-        </h1>
-        <span className="text-xs uppercase tracking-widest text-ink-4">
-          {counts.visible} visible · {counts.hidden} hidden · {counts.deleted} deleted
-        </span>
-      </div>
+      <AdminPageHeader eyebrow="Community" title="Comments" description={`${comments?.length ?? 0} comments · ${counts.hidden} hidden · ${counts.deleted} deleted`} />
 
-      <div className="mt-6 flex gap-2">
+      <div className="mt-6 flex gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
         {FILTERS.map((option) => (
           <button
             key={option.value}
@@ -141,7 +135,7 @@ export default function AdminCommentsPage() {
 
       <div className="mt-8">
         {comments === null ? (
-          <p className="text-sm text-ink-3">Loading…</p>
+          <AdminListSkeleton rows={5} />
         ) : visible.length === 0 ? (
           <p className="border-t border-line py-12 text-sm text-ink-3">
             No {filter === "all" ? "" : `${filter} `}comments yet.

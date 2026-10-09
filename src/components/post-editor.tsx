@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import { RichEditor } from "@/components/rich-editor";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useToast } from "@/components/toast";
-import { readingTimeFromDoc, slugify } from "@/lib/utils";
+import { isAllowedImageHost, readingTimeFromDoc, slugify } from "@/lib/utils";
 import { uploadPublicImage } from "@/lib/uploads/media";
 import type { Post, ReferenceItem, PostStatus } from "@/lib/types";
 import { ImagePlus, Plus, Trash2 } from "lucide-react";
@@ -38,9 +39,56 @@ export function PostEditor({ post }: { post?: Post }) {
   const [saving, setSaving] = useState<PostStatus | null>(null);
   const [coverUploading, setCoverUploading] = useState(false);
   const [message, setMessage] = useState("");
+  const [coverWarning, setCoverWarning] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [scheduleAt, setScheduleAt] = useState(post?.status === "scheduled" && post.published_at ? post.published_at.slice(0, 16) : "");
+  const [draftId, setDraftId] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const [autosaveState, setAutosaveState] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const { push } = useToast();
   const coverInputRef = useRef<HTMLInputElement>(null);
+
+  function buildPayload(status: PostStatus, publishedAt?: string | null) {
+    const finalSlug = slugTouched && slug ? slug : slugify(title);
+    return {
+      slug: finalSlug,
+      title: title.trim(),
+      excerpt: excerpt.trim() || null,
+      content,
+      cover_image_url: coverUrl.trim() || null,
+      cover_image_credit: coverCredit.trim() || null,
+      cover_image_credit_url: coverCreditUrl.trim() || null,
+      tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+      status,
+      published_at: publishedAt ?? null,
+      seo_title: seoTitle.trim() || null,
+      seo_description: seoDescription.trim() || null,
+      references: references.filter((r) => r.label.trim()),
+      reading_time_minutes: readingTimeFromDoc(content),
+      updated_at: new Date().toISOString(),
+    };
+  }
+
+  function updateCoverUrl(value: string) {
+    setCoverUrl(value);
+    if (!value.trim()) {
+      setCoverWarning("");
+      return;
+    }
+    try {
+      const url = new URL(value);
+      setCoverWarning(
+        url.protocol !== "https:"
+          ? "Use an HTTPS image URL."
+          : isAllowedImageHost(value)
+            ? ""
+            : "This host is not configured for next/image; the article will use a plain image fallback.",
+      );
+    } catch {
+      setCoverWarning("Enter a complete HTTPS image URL.");
+    }
+  }
 
   async function uploadCover(file: File | undefined) {
     if (!file || coverUploading) return;
@@ -71,6 +119,10 @@ export function PostEditor({ post }: { post?: Post }) {
       setMessage("Could not derive a slug — set one manually.");
       return;
     }
+    if (status === "scheduled" && !scheduleAt) {
+      setMessage("Choose a date and time before scheduling.");
+      return;
+    }
     setSaving(status);
     setMessage("");
 
@@ -79,33 +131,14 @@ export function PostEditor({ post }: { post?: Post }) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    const payload = {
-      slug: finalSlug,
-      title: title.trim(),
-      excerpt: excerpt.trim() || null,
-      content,
-      cover_image_url: coverUrl.trim() || null,
-      cover_image_credit: coverCredit.trim() || null,
-      cover_image_credit_url: coverCreditUrl.trim() || null,
-      tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
-      status,
-      published_at:
-        status === "published"
-          ? post?.published_at ?? new Date().toISOString()
-          : status === "scheduled"
-            ? post?.published_at
-            : null,
-      seo_title: seoTitle.trim() || null,
-      seo_description: seoDescription.trim() || null,
-      references: references.filter((r) => r.label.trim()),
-      reading_time_minutes: readingTimeFromDoc(content),
-      author_id: user?.id ?? null,
-      updated_at: new Date().toISOString(),
-    };
+    const publishedAt = status === "published"
+      ? post?.published_at ?? new Date().toISOString()
+      : status === "scheduled" ? new Date(scheduleAt).toISOString() : null;
+    const payload = { ...buildPayload(status, publishedAt), author_id: user?.id ?? null };
 
-    const { error } = post
+    const { data: inserted, error } = post
       ? await supabase.from("posts").update(payload).eq("id", post.id)
-      : await supabase.from("posts").insert(payload);
+      : await supabase.from("posts").insert(payload).select("id").single();
 
     setSaving(null);
     if (error) {
@@ -117,6 +150,10 @@ export function PostEditor({ post }: { post?: Post }) {
       push({ kind: "error", title: status === "published" ? "Could not publish post" : "Save failed", body: error.message });
       return;
     }
+    if (inserted?.id && status === "draft") setDraftId(inserted.id);
+    setDirty(false);
+    setAutosaveState("saved");
+    setLastSaved(new Date());
     push({
       kind: "success",
       title: status === "published" ? "Post published." : status === "scheduled" ? "Post scheduled." : "Draft saved.",
@@ -140,9 +177,55 @@ export function PostEditor({ post }: { post?: Post }) {
     router.refresh();
   }
 
+  useEffect(() => {
+    if (!dirty || saving !== null || (post && post.status !== "draft")) return;
+    const timer = window.setTimeout(async () => {
+      if (!title.trim()) return;
+      setAutosaveState("saving");
+      const supabase = getSupabaseBrowser();
+      const { data: { user } } = await supabase.auth.getUser();
+      const payload = { ...buildPayload("draft", null), author_id: user?.id ?? null };
+      const existingId = draftId ?? (post?.status === "draft" ? post.id : null);
+      const result = existingId
+        ? await supabase.from("posts").update(payload).eq("id", existingId)
+        : await supabase.from("posts").insert(payload).select("id").single();
+      if (result.error) {
+        setAutosaveState("failed");
+        setMessage(`Autosave failed: ${result.error.message}`);
+      } else {
+        if (result.data && "id" in result.data) setDraftId(result.data.id as string);
+        setDirty(false);
+        setAutosaveState("saved");
+        setLastSaved(new Date());
+      }
+    }, 8000);
+    return () => window.clearTimeout(timer);
+    // The timer intentionally captures the complete editor snapshot when dirty changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty]);
+
+  useEffect(() => {
+    if (!dirty || (post && post.status !== "draft")) return;
+    const guard = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", guard);
+    return () => window.removeEventListener("beforeunload", guard);
+  }, [dirty, post]);
+
+  const checklist = [
+    ["Title", Boolean(title.trim())],
+    ["Excerpt", Boolean(excerpt.trim())],
+    ["Cover image + credit", Boolean(coverUrl.trim() && coverCredit.trim())],
+    ["Alt text on every image", !content || !JSON.stringify(content).includes('"type":"image"') || !JSON.stringify(content).includes('"alt":""')],
+    ["At least one reference", references.some((reference) => reference.label.trim())],
+    ["Slug", Boolean(slug.trim() || slugify(title))],
+  ] as const;
+
   return (
-    <div className="space-y-10">
-      <div>
+    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]" onInput={() => { setDirty(true); setAutosaveState("idle"); }}>
+      <div className="xl:col-start-1">
         <label className={labelCls} htmlFor="pe-title">Title</label>
         <input
           id="pe-title"
@@ -156,7 +239,7 @@ export function PostEditor({ post }: { post?: Post }) {
         />
       </div>
 
-      <div className="grid gap-8 sm:grid-cols-2">
+      <div className="grid gap-8 sm:grid-cols-2 xl:col-start-1">
         <div>
           <label className={labelCls} htmlFor="pe-slug">Slug (URL)</label>
           <input
@@ -181,7 +264,7 @@ export function PostEditor({ post }: { post?: Post }) {
         </div>
       </div>
 
-      <div>
+      <div className="xl:col-start-1">
         <label className={labelCls} htmlFor="pe-excerpt">Excerpt</label>
         <textarea
           id="pe-excerpt"
@@ -193,14 +276,14 @@ export function PostEditor({ post }: { post?: Post }) {
         />
       </div>
 
-      <div>
+      <div className="xl:col-start-1">
         <span className={labelCls}>Body</span>
         <div className="mt-2">
-          <RichEditor initialContent={post?.content ?? null} onChange={setContent} />
+          <RichEditor initialContent={post?.content ?? null} onChange={(next) => { setContent(next); setDirty(true); setAutosaveState("idle"); }} />
         </div>
       </div>
 
-      <fieldset className="border border-line p-6" style={{ borderRadius: 7 }}>
+      <fieldset className="border border-slate-200 bg-white p-6 shadow-sm xl:col-start-1" style={{ borderRadius: 7 }}>
         <legend className="px-2 text-xs uppercase tracking-widest text-ink-4">
           Cover image &amp; attribution
         </legend>
@@ -208,7 +291,7 @@ export function PostEditor({ post }: { post?: Post }) {
           <div>
             <label className={labelCls} htmlFor="pe-cover">Image URL</label>
             <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end">
-              <input id="pe-cover" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://…" className={inputCls} />
+              <input id="pe-cover" value={coverUrl} onChange={(e) => updateCoverUrl(e.target.value)} placeholder="https://…" className={inputCls} />
               <button
                 type="button"
                 onClick={() => coverInputRef.current?.click()}
@@ -226,6 +309,7 @@ export function PostEditor({ post }: { post?: Post }) {
                 onChange={(e) => uploadCover(e.target.files?.[0])}
               />
             </div>
+            {coverWarning ? <p className="mt-2 text-xs text-ink-3" role="status">{coverWarning}</p> : null}
           </div>
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
@@ -240,7 +324,7 @@ export function PostEditor({ post }: { post?: Post }) {
         </div>
       </fieldset>
 
-      <fieldset className="border border-line p-6" style={{ borderRadius: 7 }}>
+      <fieldset className="border border-slate-200 bg-white p-6 shadow-sm xl:col-start-1" style={{ borderRadius: 7 }}>
         <legend className="px-2 text-xs uppercase tracking-widest text-ink-4">
           References
         </legend>
@@ -292,7 +376,25 @@ export function PostEditor({ post }: { post?: Post }) {
         </div>
       </fieldset>
 
-      <fieldset className="border border-line p-6" style={{ borderRadius: 7 }}>
+      <details open className="border border-slate-200 bg-white p-6 shadow-sm xl:sticky xl:top-24 xl:col-start-2 xl:row-start-1 xl:row-span-3" style={{ borderRadius: 7 }}>
+        <summary className="cursor-pointer text-xs uppercase tracking-widest text-ink-4">Publish panel</summary>
+        <div className="mt-5 grid gap-6 sm:grid-cols-2">
+          <div>
+            <label className={labelCls} htmlFor="pe-schedule">Schedule date and time</label>
+            <input id="pe-schedule" type="datetime-local" value={scheduleAt} onChange={(event) => setScheduleAt(event.target.value)} className={`${inputCls} mt-2`} />
+            <p className="mt-2 text-xs leading-relaxed text-ink-3">The post remains hidden until this time. Your site timezone is used by your browser.</p>
+          </div>
+          <div>
+            <p className={labelCls}>Pre-publish checklist</p>
+            <ul className="mt-3 space-y-2 text-sm">
+              {checklist.map(([label, complete]) => <li key={label} className={complete ? "text-ink" : "text-ink-3"}><span aria-hidden>{complete ? "✓" : "○"}</span> <span className={!complete ? "underline decoration-dotted underline-offset-2" : ""}>{label}</span></li>)}
+            </ul>
+            <p className="mt-3 text-xs text-ink-3">These checks warn but do not block publishing.</p>
+          </div>
+        </div>
+      </details>
+
+      <fieldset className="border border-slate-200 bg-white p-6 shadow-sm xl:col-start-2" style={{ borderRadius: 7 }}>
         <legend className="px-2 text-xs uppercase tracking-widest text-ink-4">
           SEO
         </legend>
@@ -308,9 +410,13 @@ export function PostEditor({ post }: { post?: Post }) {
         </div>
       </fieldset>
 
-      {message && <p className="text-sm text-red-700">{message}</p>}
+      {message && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 xl:col-start-2">{message}</p>}
 
-      <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-line bg-paper py-4">
+      <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-slate-200 bg-white py-4 xl:col-start-2">
+        <span className="mr-auto text-xs text-ink-3" role="status" aria-live="polite">
+          {autosaveState === "saving" ? "Saving…" : autosaveState === "failed" ? "Save failed" : autosaveState === "saved" && lastSaved ? `Saved at ${lastSaved.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : dirty ? "Unsaved changes" : "All changes saved"}
+        </span>
+        {post ? <Link href={`/admin/posts/${post.id}/preview`} target="_blank" className="border border-line px-4 py-2.5 text-sm text-ink-3 hover:border-ink hover:text-ink">Preview</Link> : null}
         <button
           onClick={() => save("published")}
           disabled={saving !== null}
@@ -335,7 +441,7 @@ export function PostEditor({ post }: { post?: Post }) {
         {post && (
           <button
             onClick={() => setConfirmDelete(true)}
-            className="ml-auto text-sm text-ink-4 underline underline-offset-2 transition-colors hover:text-red-700"
+            className="text-sm text-ink-4 underline underline-offset-2 transition-colors hover:text-red-700"
           >
             Delete
           </button>

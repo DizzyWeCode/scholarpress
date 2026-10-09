@@ -142,6 +142,19 @@ create table if not exists public.page_views (
   created_at timestamptz not null default now()
 );
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'page_views_path_length_check'
+      and conrelid = 'public.page_views'::regclass
+  ) then
+    alter table public.page_views
+      add constraint page_views_path_length_check check (char_length(path) <= 300);
+  end if;
+end
+$$;
+
 -- ---------- Member discussion ----------
 create table if not exists public.comments (
   id uuid primary key default gen_random_uuid(),
@@ -290,6 +303,30 @@ create trigger comments_set_author_name
   before insert on public.comments
   for each row execute function public.set_comment_author_name();
 
+create or replace function public.protect_comment_fields()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  if not public.is_owner() and (
+    new.like_count is distinct from old.like_count
+    or new.post_id is distinct from old.post_id
+    or new.parent_id is distinct from old.parent_id
+    or new.user_id is distinct from old.user_id
+    or new.author_name is distinct from old.author_name
+  ) then
+    raise exception 'Only the site owner can change protected comment fields';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists comments_protect_fields on public.comments;
+create trigger comments_protect_fields
+  before update on public.comments
+  for each row execute function public.protect_comment_fields();
+
 create or replace function public.refresh_comment_like_count()
 returns trigger
 language plpgsql
@@ -409,7 +446,11 @@ create policy "profiles_update_self" on public.profiles
 drop policy if exists "posts_public_read" on public.posts;
 drop policy if exists "posts_owner_write" on public.posts;
 create policy "posts_public_read" on public.posts
-  for select using (status = 'published' or public.is_owner());
+  for select using (
+    status = 'published'
+    or (status = 'scheduled' and published_at is not null and published_at <= now())
+    or public.is_owner()
+  );
 create policy "posts_owner_write" on public.posts
   for all using (public.is_owner()) with check (public.is_owner());
 
@@ -463,14 +504,14 @@ create policy "comments_insert" on public.comments
     and status = 'visible'
     and exists (
       select 1 from public.posts
-      where posts.id = post_id and posts.status = 'published'
+      where posts.id = comments.post_id and posts.status = 'published'
     )
     and (
-      parent_id is null
+      comments.parent_id is null
       or exists (
         select 1 from public.comments parent
-        where parent.id = parent_id
-          and parent.post_id = post_id
+        where parent.id = comments.parent_id
+          and parent.post_id = comments.post_id
           and parent.parent_id is null
           and parent.status = 'visible'
       )
@@ -676,4 +717,3 @@ create policy "avatars_update_own" on storage.objects
 create policy "avatars_delete_own" on storage.objects
   for delete to authenticated
   using (bucket_id = 'avatars' and ((storage.foldername(name))[1] = auth.uid()::text or public.is_owner()));
-

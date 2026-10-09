@@ -1,76 +1,37 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { format } from "date-fns";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
+import { AdminButton, AdminCard, AdminCardHeader, AdminPageHeader, AdminSpinner, StatusBadge } from "@/components/admin-ui";
+
+type DashboardStats = { drafts: number; scheduled: number; webinarAnnouncements: number; hiddenComments: number; newComments: number; views30d: number; published: number; papers: number; subscribers: number };
+type Activity = { posts: { id: string; title: string; status: string; updated_at: string }[]; comments: { id: string; author_name: string; body: string; created_at: string }[]; webinars: { id: string; title: string; starts_at: string }[] };
 
 export default function AdminDashboardPage() {
-  const [stats, setStats] = useState<{
-    posts: number;
-    papers: number;
-    webinars: number;
-    subscribers: number;
-    views30d: number;
-  } | null>(null);
-
-  useEffect(() => {
-    const supabase = getSupabaseBrowser();
-    const since = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
-    Promise.all([
-      supabase.from("posts").select("id", { count: "exact", head: true }),
-      supabase.from("papers").select("id", { count: "exact", head: true }),
-      supabase.from("webinars").select("id", { count: "exact", head: true }).eq("status", "upcoming"),
-      supabase.from("subscribers").select("id", { count: "exact", head: true }),
-      supabase.from("page_views").select("id", { count: "exact", head: true }).gte("created_at", since),
-    ]).then(([posts, papers, webinars, subscribers, views]) => {
-      setStats({
-        posts: posts.count ?? 0,
-        papers: papers.count ?? 0,
-        webinars: webinars.count ?? 0,
-        subscribers: subscribers.count ?? 0,
-        views30d: views.count ?? 0,
-      });
-    });
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [activity, setActivity] = useState<Activity | null>(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const load = useCallback(async () => {
+    setLoading(true); setError(""); const supabase = getSupabaseBrowser(); const since = new Date(Date.now() - 30 * 86400000).toISOString(); const recent = new Date(Date.now() - 7 * 86400000).toISOString();
+    const [drafts, scheduled, hidden, recentComments, views, webinars, announcements, published, papers, subscribers, posts, comments, upcoming] = await Promise.all([
+      supabase.from("posts").select("id", { count: "exact", head: true }).eq("status", "draft"), supabase.from("posts").select("id", { count: "exact", head: true }).eq("status", "scheduled"), supabase.from("comments").select("id", { count: "exact", head: true }).eq("status", "hidden"), supabase.from("comments").select("id", { count: "exact", head: true }).gte("created_at", recent), supabase.from("page_views").select("id", { count: "exact", head: true }).gte("created_at", since), supabase.from("webinars").select("id").eq("status", "upcoming"), supabase.from("email_sends").select("webinar_id").eq("purpose", "webinar_announcement"), supabase.from("posts").select("id", { count: "exact", head: true }).eq("status", "published"), supabase.from("papers").select("id", { count: "exact", head: true }), supabase.from("subscribers").select("id", { count: "exact", head: true }), supabase.from("posts").select("id,title,status,updated_at").order("updated_at", { ascending: false }).limit(5), supabase.from("comments").select("id,author_name,body,created_at").order("created_at", { ascending: false }).limit(5), supabase.from("webinars").select("id,title,starts_at").eq("status", "upcoming").order("starts_at", { ascending: true }).limit(5),
+    ]);
+    const responses = [drafts, scheduled, hidden, recentComments, views, webinars, announcements, published, papers, subscribers, posts, comments, upcoming]; const failed = responses.find((response) => response.error);
+    if (failed?.error) { setError(`Could not load dashboard: ${failed.error.message}`); setLoading(false); return; }
+    const announced = new Set((announcements.data ?? []).map((row) => row.webinar_id).filter(Boolean));
+    setStats({ drafts: drafts.count ?? 0, scheduled: scheduled.count ?? 0, webinarAnnouncements: (webinars.data ?? []).filter((row) => !announced.has(row.id)).length, hiddenComments: hidden.count ?? 0, newComments: recentComments.count ?? 0, views30d: views.count ?? 0, published: published.count ?? 0, papers: papers.count ?? 0, subscribers: subscribers.count ?? 0 });
+    setActivity({ posts: posts.data ?? [], comments: comments.data ?? [], webinars: upcoming.data ?? [] }); setLoading(false);
   }, []);
-
-  const cards = [
-    { label: "Posts", value: stats?.posts, href: "/admin/posts" },
-    { label: "Papers", value: stats?.papers, href: "/admin/papers" },
-    { label: "Upcoming webinars", value: stats?.webinars, href: "/admin/webinars" },
-    { label: "Subscribers", value: stats?.subscribers, href: "/admin/subscribers" },
-    { label: "Views (30 days)", value: stats?.views30d, href: "/admin/analytics" },
-  ];
-
-  return (
-    <div>
-      <h1 className="font-serif text-3xl tracking-tight text-ink">Dashboard</h1>
-      <div className="mt-8 grid grid-cols-2 border border-line md:grid-cols-5" style={{ borderRadius: 7 }}>
-        {cards.map((card, i) => (
-          <Link
-            key={card.label}
-            href={card.href}
-            className={`group p-5 transition-colors hover:bg-paper-2 ${
-              i > 0 ? "border-l border-line" : ""
-            } ${i >= 2 ? "max-md:border-t max-md:border-line" : ""} ${
-              i === 2 ? "max-md:border-l-0" : ""
-            }`}
-          >
-            <p className="font-serif text-3xl tracking-tight text-ink transition-opacity group-hover:opacity-60">
-              {card.value ?? "—"}
-            </p>
-            <p className="mt-1 text-xs uppercase tracking-widest text-ink-4">
-              {card.label}
-            </p>
-          </Link>
-        ))}
-      </div>
-      <p className="mt-8 max-w-lg text-sm leading-relaxed text-ink-3">
-        Welcome to the studio. Draft and format articles under{" "}
-        <strong className="text-ink">Posts</strong>, curate your publication
-        record under <strong className="text-ink">Papers</strong>, announce
-        sessions under <strong className="text-ink">Webinars</strong>, and
-        follow readership under <strong className="text-ink">Analytics</strong>.
-      </p>
-    </div>
-  );
+  useEffect(() => { void load(); }, [load]);
+  const attention = [{ label: "Drafts", value: stats?.drafts, href: "/admin/posts?status=draft" }, { label: "Scheduled posts", value: stats?.scheduled, href: "/admin/posts?status=scheduled" }, { label: "Webinars awaiting announcement", value: stats?.webinarAnnouncements, href: "/admin/webinars" }, { label: "Hidden comments", value: stats?.hiddenComments, href: "/admin/comments?status=hidden" }];
+  const metrics = [{ label: "Published posts", value: stats?.published }, { label: "Papers", value: stats?.papers }, { label: "Subscribers", value: stats?.subscribers }, { label: "Views · 30 days", value: stats?.views30d }];
+  return <div className="space-y-6"><AdminPageHeader eyebrow="Overview" title="Dashboard" description="Manage your publication, community, and audience from one workspace." actions={<AdminButton onClick={() => void load()} disabled={loading} variant="secondary">Refresh</AdminButton>} />
+    {error ? <div role="alert" className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
+    <section><div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-semibold text-slate-900">Needs attention</h2><span className="text-xs text-slate-500">Actionable items</span></div><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{attention.map((card) => <Link key={card.label} href={card.href} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-indigo-300 hover:shadow"><p className="text-3xl font-semibold tracking-tight text-slate-950">{loading ? <span className="inline-block h-8 w-10 animate-pulse rounded bg-slate-100" /> : card.value ?? 0}</p><p className="mt-2 text-sm text-slate-500">{card.label}</p><p className="mt-4 text-xs font-semibold text-indigo-600">Review →</p></Link>)}</div></section>
+    <div className="grid gap-6 xl:grid-cols-[1fr_1fr]"> <AdminCard><AdminCardHeader title="Workspace metrics" description="Current content and audience totals" /><div className="grid grid-cols-2 divide-x divide-y divide-slate-200 sm:grid-cols-4 sm:divide-y-0">{metrics.map((metric) => <div key={metric.label} className="p-5"><p className="flex h-8 items-center text-2xl font-semibold text-slate-950">{loading ? <AdminSpinner label={`Loading ${metric.label}`} /> : metric.value ?? 0}</p><p className="mt-1 text-xs text-slate-500">{metric.label}</p></div>)}</div></AdminCard><AdminCard><AdminCardHeader title="Quick actions" description="Start a common workflow" /><div className="grid grid-cols-2 gap-3 p-5"><Link href="/admin/posts/new" className="rounded-md border border-slate-200 p-4 text-sm font-medium text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700">New post</Link><Link href="/admin/papers" className="rounded-md border border-slate-200 p-4 text-sm font-medium text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700">Add paper</Link><Link href="/admin/webinars" className="rounded-md border border-slate-200 p-4 text-sm font-medium text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700">Add webinar</Link><Link href="/admin/comments" className="rounded-md border border-slate-200 p-4 text-sm font-medium text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700">Review comments</Link></div></AdminCard></div>
+    <div className="grid gap-6 xl:grid-cols-3"><AdminCard><AdminCardHeader title="Recently updated posts" action={<Link href="/admin/posts" className="text-xs font-semibold text-indigo-600">View all</Link>} /><div className="divide-y divide-slate-100">{activity?.posts.map((post) => <Link href={`/admin/posts/${post.id}`} key={post.id} className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-slate-50"><span className="truncate text-sm font-medium text-slate-700">{post.title || "Untitled"}</span><StatusBadge status={post.status} /></Link>) ?? <p className="flex items-center gap-2 p-5 text-sm text-slate-500"><AdminSpinner /> Updating activity</p>}</div></AdminCard><AdminCard><AdminCardHeader title="Recent comments" action={<Link href="/admin/comments" className="text-xs font-semibold text-indigo-600">View all</Link>} /><div className="divide-y divide-slate-100">{activity?.comments.map((comment) => <div key={comment.id} className="px-5 py-3"><p className="truncate text-sm font-medium text-slate-700">{comment.author_name || "Reader"}</p><p className="mt-1 truncate text-xs text-slate-500">{comment.body}</p></div>) ?? <p className="flex items-center gap-2 p-5 text-sm text-slate-500"><AdminSpinner /> Updating activity</p>}</div></AdminCard><AdminCard><AdminCardHeader title="Upcoming webinars" action={<Link href="/admin/webinars" className="text-xs font-semibold text-indigo-600">View all</Link>} /><div className="divide-y divide-slate-100">{activity?.webinars.map((webinar) => <div key={webinar.id} className="px-5 py-3"><p className="truncate text-sm font-medium text-slate-700">{webinar.title}</p><p className="mt-1 text-xs text-slate-500">{format(new Date(webinar.starts_at), "dd MMM yyyy, HH:mm")}</p></div>) ?? <p className="flex items-center gap-2 p-5 text-sm text-slate-500"><AdminSpinner /> Updating activity</p>}</div></AdminCard></div>
+  </div>;
 }

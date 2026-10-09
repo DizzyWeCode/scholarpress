@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import { uploadPublicImage } from "@/lib/uploads/media";
+import { Dialog } from "@/components/ui/dialog";
 
 /**
  * Block-style rich text editor (TipTap).
@@ -37,19 +38,23 @@ function ToolbarButton({
   onClick,
   active,
   label,
+  buttonRef,
   children,
 }: {
   onClick: () => void;
   active?: boolean;
   label: string;
+  buttonRef?: RefObject<HTMLButtonElement>;
   children: React.ReactNode;
 }) {
   return (
     <button
       type="button"
+      ref={buttonRef}
       onClick={onClick}
       title={label}
       aria-label={label}
+      aria-pressed={active}
       className={`rounded p-1.5 transition-colors ${
         active ? "bg-ink text-paper" : "text-ink-3 hover:bg-paper-2 hover:text-ink"
       }`}
@@ -64,29 +69,69 @@ function Toolbar({ editor }: { editor: Editor }) {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [linkValue, setLinkValue] = useState("");
+  const [linkError, setLinkError] = useState("");
+  const [imageOpen, setImageOpen] = useState(false);
+  const [imageSource, setImageSource] = useState("");
+  const [imageAlt, setImageAlt] = useState("");
+  const [imageCredit, setImageCredit] = useState("");
+  const [imageDecorative, setImageDecorative] = useState(false);
+  const [imageError, setImageError] = useState("");
+  const linkTriggerRef = useRef<HTMLButtonElement>(null);
+  const imageTriggerRef = useRef<HTMLButtonElement>(null);
 
   function setLink() {
     const previous = editor.getAttributes("link").href as string | undefined;
-    const url = window.prompt("Link URL:", previous ?? "https://");
-    if (url === null) return;
-    if (url === "" || url === "https://") {
-      editor.chain().focus().unsetLink().run();
-      return;
-    }
-    editor.chain().focus().setLink({ href: url }).run();
+    setLinkValue(previous ?? "");
+    setLinkError("");
+    setLinkOpen(true);
   }
 
-  function addImageUrl() {
-    const url = window.prompt("Image URL (https://…):");
-    if (!url) return;
-    const credit = window.prompt(
-      "Image credit / attribution (shown as caption, e.g. “Photo by Jane Doe”):",
-    );
-    editor
-      .chain()
-      .focus()
-      .setImage({ src: url, alt: credit ?? "", title: credit ?? "" })
-      .run();
+  function applyLink() {
+    if (!linkValue.trim()) {
+      editor.chain().focus().unsetLink().run();
+      setLinkOpen(false);
+      return;
+    }
+    try {
+      const url = new URL(linkValue.trim());
+      if (!["http:", "https:", "mailto:"].includes(url.protocol)) throw new Error();
+    } catch {
+      setLinkError("Enter an http, https, or mailto link.");
+      return;
+    }
+    editor.chain().focus().setLink({ href: linkValue.trim() }).run();
+    setLinkOpen(false);
+  }
+
+  function openImageDialog(source = "") {
+    setImageSource(source);
+    setImageAlt("");
+    setImageCredit("");
+    setImageDecorative(false);
+    setImageError("");
+    setImageOpen(true);
+  }
+
+  function applyImage() {
+    try {
+      const url = new URL(imageSource.trim());
+      if (url.protocol !== "https:") throw new Error();
+    } catch {
+      setImageError("Enter a valid HTTPS image URL.");
+      return;
+    }
+    if (!imageDecorative && !imageAlt.trim()) {
+      setImageError("Add alt text or mark the image as decorative.");
+      return;
+    }
+    editor.chain().focus().setImage({
+      src: imageSource.trim(),
+      alt: imageDecorative ? "" : imageAlt.trim(),
+      title: imageCredit.trim(),
+    }).run();
+    setImageOpen(false);
   }
 
   async function addImageFile(file: File | undefined) {
@@ -99,14 +144,7 @@ function Toolbar({ editor }: { editor: Editor }) {
         file,
         folder: "posts/body",
       });
-      const credit = window.prompt(
-        "Image credit / attribution (optional, shown as caption):",
-      );
-      editor
-        .chain()
-        .focus()
-        .setImage({ src: publicUrl, alt: credit ?? "", title: credit ?? "" })
-        .run();
+      openImageDialog(publicUrl);
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : "Upload failed.");
     } finally {
@@ -116,7 +154,7 @@ function Toolbar({ editor }: { editor: Editor }) {
   }
 
   return (
-    <div className="sticky top-16 z-10 flex flex-wrap items-center gap-0.5 border-b border-line bg-paper py-2">
+    <div role="toolbar" aria-label="Formatting toolbar" className="sticky top-16 z-10 flex flex-wrap items-center gap-0.5 border-b border-line bg-paper py-2">
       <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} label="Bold">
         <Bold className={s} />
       </ToolbarButton>
@@ -156,7 +194,7 @@ function Toolbar({ editor }: { editor: Editor }) {
         <Minus className={s} />
       </ToolbarButton>
       <span className="mx-2 h-5 w-px bg-line" />
-      <ToolbarButton onClick={setLink} active={editor.isActive("link")} label="Link">
+      <ToolbarButton buttonRef={linkTriggerRef} onClick={setLink} active={editor.isActive("link")} label="Link">
         <LinkIcon className={s} />
       </ToolbarButton>
       <ToolbarButton
@@ -167,7 +205,8 @@ function Toolbar({ editor }: { editor: Editor }) {
       </ToolbarButton>
       <button
         type="button"
-        onClick={addImageUrl}
+        ref={imageTriggerRef}
+        onClick={() => openImageDialog()}
         className="rounded px-2 py-1.5 text-xs text-ink-3 transition-colors hover:bg-paper-2 hover:text-ink"
       >
         URL
@@ -188,6 +227,26 @@ function Toolbar({ editor }: { editor: Editor }) {
       <ToolbarButton onClick={() => editor.chain().focus().redo().run()} label="Redo">
         <Redo2 className={s} />
       </ToolbarButton>
+      <Dialog open={linkOpen} title="Add link" onClose={() => setLinkOpen(false)} returnFocusRef={linkTriggerRef}>
+        <label htmlFor="editor-link-url" className="text-sm text-ink">Link URL</label>
+        <input id="editor-link-url" autoFocus value={linkValue} onChange={(event) => setLinkValue(event.target.value)} placeholder="https://… or mailto:…" className="mt-2 w-full border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink" />
+        {linkError ? <p role="alert" className="mt-2 text-sm text-red-700">{linkError}</p> : null}
+        <div className="mt-5 flex justify-end gap-3">
+          <button type="button" onClick={() => setLinkOpen(false)} className="border border-line px-4 py-2 text-sm text-ink-3">Cancel</button>
+          <button type="button" onClick={applyLink} className="bg-ink px-4 py-2 text-sm text-paper">Apply link</button>
+        </div>
+      </Dialog>
+      <Dialog open={imageOpen} title="Add image" onClose={() => setImageOpen(false)} returnFocusRef={imageTriggerRef}>
+        <label htmlFor="editor-image-url" className="text-sm text-ink">Image URL</label>
+        <input id="editor-image-url" autoFocus value={imageSource} onChange={(event) => setImageSource(event.target.value)} placeholder="https://…" className="mt-2 w-full border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink" />
+        <label htmlFor="editor-image-alt" className="mt-4 block text-sm text-ink">Alt text</label>
+        <input id="editor-image-alt" value={imageAlt} onChange={(event) => setImageAlt(event.target.value)} disabled={imageDecorative} placeholder="Describe what the image conveys" className="mt-2 w-full border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink disabled:opacity-50" />
+        <label className="mt-4 flex items-center gap-2 text-sm text-ink"><input type="checkbox" checked={imageDecorative} onChange={(event) => setImageDecorative(event.target.checked)} /> Decorative image</label>
+        <label htmlFor="editor-image-credit" className="mt-4 block text-sm text-ink">Caption / credit (optional)</label>
+        <input id="editor-image-credit" value={imageCredit} onChange={(event) => setImageCredit(event.target.value)} className="mt-2 w-full border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink" />
+        {imageError ? <p role="alert" className="mt-2 text-sm text-red-700">{imageError}</p> : null}
+        <div className="mt-5 flex justify-end gap-3"><button type="button" onClick={() => setImageOpen(false)} className="border border-line px-4 py-2 text-sm text-ink-3">Cancel</button><button type="button" onClick={applyImage} className="bg-ink px-4 py-2 text-sm text-paper">Insert image</button></div>
+      </Dialog>
     </div>
   );
 }
@@ -208,6 +267,7 @@ export function RichEditor({
   }, [onChange]);
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({ heading: { levels: [2, 3] } }),
       Underline,

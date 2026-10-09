@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Dialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/toast";
 import type { Webinar } from "@/lib/types";
 import { Mail, Plus, Trash2, X } from "lucide-react";
+import { AdminButton, AdminListSkeleton, AdminPageHeader, StatusBadge } from "@/components/admin-ui";
 
 const inputCls =
   "w-full border-0 border-b border-line bg-transparent px-0 py-2 text-sm text-ink outline-none transition-colors placeholder:text-ink-4 focus:border-ink";
@@ -42,23 +44,15 @@ export default function AdminWebinarsPage() {
 
   return (
     <div>
-      <div className="flex items-baseline justify-between">
-        <h1 className="font-serif text-3xl tracking-tight text-ink">Webinars</h1>
-        <button
-          onClick={() => setCreating(true)}
-          className="inline-flex items-center gap-1.5 rounded-full bg-ink px-5 py-2 text-sm text-paper transition-opacity hover:opacity-80"
-        >
-          <Plus className="h-4 w-4" /> New webinar
-        </button>
-      </div>
+      <AdminPageHeader eyebrow="Content" title="Webinars" description={`${webinars?.length ?? 0} sessions in your workspace.`} actions={<AdminButton onClick={() => setCreating(true)}><Plus className="mr-1.5 h-4 w-4" /> New webinar</AdminButton>} />
 
       {notice && (
         <p className="mt-4 border-t border-line pt-4 text-sm text-ink-3">{notice}</p>
       )}
 
-      <div className="mt-8">
+      <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white px-5 shadow-sm">
         {webinars === null ? (
-          <p className="text-sm text-ink-3">Loading…</p>
+          <AdminListSkeleton rows={4} />
         ) : webinars.length === 0 ? (
           <p className="border-t border-line py-12 text-sm text-ink-3">
             No webinars yet.
@@ -75,7 +69,7 @@ export default function AdminWebinarsPage() {
               >
                 {w.title}
                 <span className="ml-3 font-sans text-xs uppercase tracking-widest text-ink-4">
-                  {w.status}
+                  <StatusBadge status={w.status} />
                 </span>
               </button>
               <span className="text-xs text-ink-4">
@@ -203,14 +197,9 @@ function AnnounceDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/40 p-4" onClick={onClose}>
-      <div
-        className="mx-auto my-10 max-w-md bg-paper p-8"
-        style={{ borderRadius: 7 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif text-2xl tracking-tight text-ink">Email announcement</h2>
+    <Dialog open title="Email announcement" onClose={onClose}>
+      <div>
+        <div className="flex justify-end">
           <button onClick={onClose} aria-label="Close" className="p-1 text-ink-4 hover:text-ink">
             <X className="h-5 w-5" />
           </button>
@@ -221,8 +210,9 @@ function AnnounceDialog({
         {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
         <div className="mt-6 grid gap-4">
           <div>
-            <label className={labelCls}>Send a test to</label>
+            <label className={labelCls} htmlFor="announcement-test-email">Send a test to</label>
             <input
+              id="announcement-test-email"
               type="email"
               value={testEmail}
               onChange={(e) => setTestEmail(e.target.value)}
@@ -266,7 +256,7 @@ function AnnounceDialog({
           void send("all", true);
         }}
       />
-    </div>
+    </Dialog>
   );
 }
 
@@ -292,10 +282,19 @@ function WebinarForm({
     status: webinar?.status ?? "upcoming",
   });
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
 
   async function save() {
-    if (!form.title.trim() || !form.starts_at) return;
+    if (!form.title.trim()) {
+      setError("Title is required.");
+      return;
+    }
+    if (!form.starts_at) {
+      setError("Date and time are required.");
+      return;
+    }
+    setError(null);
     setBusy(true);
     const payload = {
       title: form.title.trim(),
@@ -313,65 +312,60 @@ function WebinarForm({
       : await supabase.from("webinars").insert(payload);
     setBusy(false);
     if (!error) onSaved();
+    else setError(error.message);
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/40 p-4" onClick={onClose}>
-      <div
-        className="mx-auto my-10 max-w-2xl bg-paper p-8"
-        style={{ borderRadius: 7 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif text-2xl tracking-tight text-ink">
-            {webinar ? "Edit webinar" : "Announce webinar"}
-          </h2>
+    <Dialog open title={webinar ? "Edit webinar" : "Announce webinar"} onClose={onClose}>
+      <div>
+        <div className="flex justify-end">
           <button onClick={onClose} aria-label="Close" className="p-1 text-ink-4 hover:text-ink">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="mt-6 grid gap-6">
           <div>
-            <label className={labelCls}>Title</label>
-            <input value={form.title} onChange={(e) => set("title", e.target.value)} className={`${inputCls} mt-2`} />
+            <label className={labelCls} htmlFor="webinar-title">Title</label>
+            <input id="webinar-title" value={form.title} onChange={(e) => set("title", e.target.value)} className={`${inputCls} mt-2`} />
           </div>
           <div>
-            <label className={labelCls}>Description</label>
-            <textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={3} className={`${inputCls} mt-2 resize-y`} />
+            <label className={labelCls} htmlFor="webinar-description">Description</label>
+            <textarea id="webinar-description" value={form.description} onChange={(e) => set("description", e.target.value)} rows={3} className={`${inputCls} mt-2 resize-y`} />
           </div>
           <div className="grid gap-6 sm:grid-cols-3">
             <div>
-              <label className={labelCls}>Date &amp; time</label>
-              <input type="datetime-local" value={form.starts_at} onChange={(e) => set("starts_at", e.target.value)} className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="webinar-starts-at">Date &amp; time</label>
+              <input id="webinar-starts-at" type="datetime-local" value={form.starts_at} onChange={(e) => set("starts_at", e.target.value)} className={`${inputCls} mt-2`} />
             </div>
             <div>
-              <label className={labelCls}>Duration (min)</label>
-              <input type="number" value={form.duration_minutes ?? ""} onChange={(e) => set("duration_minutes", e.target.value ? Number(e.target.value) : null)} className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="webinar-duration">Duration (min)</label>
+              <input id="webinar-duration" type="number" value={form.duration_minutes ?? ""} onChange={(e) => set("duration_minutes", e.target.value ? Number(e.target.value) : null)} className={`${inputCls} mt-2`} />
             </div>
             <div>
-              <label className={labelCls}>Platform</label>
-              <input value={form.platform} onChange={(e) => set("platform", e.target.value)} className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="webinar-platform">Platform</label>
+              <input id="webinar-platform" value={form.platform} onChange={(e) => set("platform", e.target.value)} className={`${inputCls} mt-2`} />
             </div>
           </div>
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
-              <label className={labelCls}>Registration URL</label>
-              <input value={form.registration_url} onChange={(e) => set("registration_url", e.target.value)} placeholder="https://zoom.us/webinar/register/…" className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="webinar-registration-url">Registration URL</label>
+              <input id="webinar-registration-url" value={form.registration_url} onChange={(e) => set("registration_url", e.target.value)} placeholder="https://zoom.us/webinar/register/…" className={`${inputCls} mt-2`} />
             </div>
             <div>
-              <label className={labelCls}>Recording URL (for past sessions)</label>
-              <input value={form.recording_url} onChange={(e) => set("recording_url", e.target.value)} className={`${inputCls} mt-2`} />
+              <label className={labelCls} htmlFor="webinar-recording-url">Recording URL (for past sessions)</label>
+              <input id="webinar-recording-url" value={form.recording_url} onChange={(e) => set("recording_url", e.target.value)} className={`${inputCls} mt-2`} />
             </div>
           </div>
           <div>
-            <label className={labelCls}>Status</label>
-            <select value={form.status} onChange={(e) => set("status", e.target.value)} className={`${inputCls} mt-2`}>
+            <label className={labelCls} htmlFor="webinar-status">Status</label>
+            <select id="webinar-status" value={form.status} onChange={(e) => set("status", e.target.value)} className={`${inputCls} mt-2`}>
               <option value="upcoming">Upcoming</option>
               <option value="past">Past (recording)</option>
               <option value="draft">Draft (hidden)</option>
             </select>
           </div>
         </div>
+        {error ? <p role="alert" className="mt-5 text-sm text-red-700">{error}</p> : null}
         <div className="mt-8 flex gap-3">
           <button
             onClick={save}
@@ -385,6 +379,6 @@ function WebinarForm({
           </button>
         </div>
       </div>
-    </div>
+    </Dialog>
   );
 }
