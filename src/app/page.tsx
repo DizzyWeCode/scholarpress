@@ -30,7 +30,7 @@ export default async function HomePage() {
       supabase
         .from("posts")
         .select("id, slug, title, excerpt, tags, status, published_at, reading_time_minutes, updated_at, cover_image_url")
-        .eq("status", "published")
+        .or(`status.eq.published,and(status.eq.scheduled,published_at.lte.${new Date().toISOString()})`)
         .order("published_at", { ascending: false })
         .limit(4),
       supabase

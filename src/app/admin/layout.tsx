@@ -47,7 +47,8 @@ export default async function AdminLayout({
           ← View site
         </Link>
       </aside>
-      <div className="min-w-0 flex-1">{children}</div>
+      <div className="min-w-0 flex-1 pb-20 md:pb-0">{children}</div>
+      <AdminNavLinks mobile />
     </div>
   );
 }

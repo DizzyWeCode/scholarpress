@@ -446,7 +446,11 @@ create policy "profiles_update_self" on public.profiles
 drop policy if exists "posts_public_read" on public.posts;
 drop policy if exists "posts_owner_write" on public.posts;
 create policy "posts_public_read" on public.posts
-  for select using (status = 'published' or public.is_owner());
+  for select using (
+    status = 'published'
+    or (status = 'scheduled' and published_at is not null and published_at <= now())
+    or public.is_owner()
+  );
 create policy "posts_owner_write" on public.posts
   for all using (public.is_owner()) with check (public.is_owner());
 

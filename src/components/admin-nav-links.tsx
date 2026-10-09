@@ -21,10 +21,10 @@ const NAV = [
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
-export function AdminNavLinks() {
+export function AdminNavLinks({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
   return (
-    <nav className="mt-5 flex flex-col gap-1" aria-label="Admin navigation">
+    <nav className={mobile ? "fixed inset-x-0 bottom-0 z-40 flex gap-1 overflow-x-auto border-t border-line bg-paper px-2 py-2 shadow-lg md:hidden" : "mt-5 flex flex-col gap-1"} aria-label="Admin navigation">
       {NAV.map((item) => {
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (
@@ -32,7 +32,7 @@ export function AdminNavLinks() {
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`flex items-center gap-2.5 rounded px-3 py-2 text-sm transition-colors ${active ? "bg-paper-2 text-ink" : "text-ink-3 hover:bg-paper-2 hover:text-ink"}`}
+            className={`flex shrink-0 items-center gap-2.5 rounded px-3 py-2 text-sm transition-colors ${mobile ? "min-w-[68px] flex-col gap-1 text-[10px]" : ""} ${active ? "bg-paper-2 text-ink" : "text-ink-3 hover:bg-paper-2 hover:text-ink"}`}
           >
             <item.icon className="h-4 w-4" aria-hidden="true" />
             {item.label}

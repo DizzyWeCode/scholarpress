@@ -246,10 +246,18 @@ do $$
 declare
   n bigint;
   draft_id uuid;
+  future_scheduled_id uuid;
+  past_scheduled_id uuid;
 begin
   insert into public.posts (slug, title, excerpt, status)
   values ('ci-rls-draft', 'CI RLS draft', 'not for public eyes', 'draft')
   returning id into draft_id;
+  insert into public.posts (slug, title, status, published_at)
+  values ('ci-future-scheduled', 'CI future scheduled', 'scheduled', now() + interval '1 day')
+  returning id into future_scheduled_id;
+  insert into public.posts (slug, title, status, published_at)
+  values ('ci-past-scheduled', 'CI past scheduled', 'scheduled', now() - interval '1 day')
+  returning id into past_scheduled_id;
 
   set role anon;
 
@@ -281,6 +289,12 @@ begin
   if exists (select 1 from public.posts where id = draft_id) then
     raise exception 'RLS leak: anon could read a draft post';
   end if;
+  if exists (select 1 from public.posts where id = future_scheduled_id) then
+    raise exception 'RLS leak: anon could read a future scheduled post';
+  end if;
+  if not exists (select 1 from public.posts where id = past_scheduled_id) then
+    raise exception 'RLS regression: anon could not read a past scheduled post';
+  end if;
 
   select count(*) into n from public.posts where status = 'published';
   if n = 0 then
@@ -301,7 +315,7 @@ begin
 
   delete from public.subscribers where email = 'ci-smoke@example.org';
   delete from public.page_views where path = '/ci-rls-smoke-test';
-  delete from public.posts where id = draft_id;
+  delete from public.posts where id in (draft_id, future_scheduled_id, past_scheduled_id);
 
   raise notice 'OK — RLS smoke test passed for role anon';
 end

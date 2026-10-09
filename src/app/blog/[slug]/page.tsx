@@ -34,7 +34,7 @@ export default async function ArticlePage({
     .from("posts")
     .select("*")
     .eq("slug", params.slug)
-    .eq("status", "published")
+    .or(`status.eq.published,and(status.eq.scheduled,published_at.lte.${new Date().toISOString()})`)
     .single();
   const post = (data as Post) ?? null;
   if (!post) notFound();

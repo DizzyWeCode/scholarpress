@@ -25,7 +25,7 @@ export default async function BlogPage({
     .select(
       "id, slug, title, excerpt, tags, status, published_at, reading_time_minutes, updated_at",
     )
-    .eq("status", "published")
+    .or(`status.eq.published,and(status.eq.scheduled,published_at.lte.${new Date().toISOString()})`)
     .order("published_at", { ascending: false });
   posts = (data ?? []) as Post[];
 
