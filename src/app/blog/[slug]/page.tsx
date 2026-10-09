@@ -12,7 +12,7 @@ import { NewsletterForm } from "@/components/newsletter-form";
 import { ArticleEngagement } from "@/components/article-engagement";
 import { BookmarkButton } from "@/components/bookmark-button";
 import { SITE, absoluteOgImage, absoluteUrl } from "@/lib/site";
-import { excerptFromDoc } from "@/lib/utils";
+import { excerptFromDoc, isAllowedImageHost } from "@/lib/utils";
 import type { Post } from "@/lib/types";
 
 export const revalidate = 60;
@@ -130,14 +130,19 @@ export default async function ArticlePage({
       {post.cover_image_url ? (
         <Reveal delay={120}>
           <figure className="mt-12">
-            <Image
-              src={post.cover_image_url}
-              alt={post.title}
-              width={1200}
-              height={675}
-              className="rounded"
-              priority
-            />
+            {isAllowedImageHost(post.cover_image_url) ? (
+              <Image
+                src={post.cover_image_url}
+                alt={post.title}
+                width={1200}
+                height={675}
+                className="rounded"
+                priority
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={post.cover_image_url} alt={post.title} width={1200} height={675} className="rounded" />
+            )}
             {post.cover_image_credit ? (
               <figcaption className="mt-2 text-xs text-ink-4">
                 {post.cover_image_credit_url ? (

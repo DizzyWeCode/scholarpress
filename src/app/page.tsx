@@ -9,6 +9,7 @@ import { PaperCard } from "@/components/paper-card";
 import { WebinarCard } from "@/components/webinar-card";
 import { NewsletterForm } from "@/components/newsletter-form";
 import type { Post, Paper, Webinar } from "@/lib/types";
+import { isWebinarPast } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
 
 export const revalidate = 60;
@@ -36,6 +37,7 @@ export default async function HomePage() {
         .from("papers")
         .select("id, title, abstract, authors, venue, year, doi, url, pdf_url, tags, featured, status, created_at")
         .eq("status", "published")
+        .order("featured", { ascending: false })
         .order("year", { ascending: false })
         .limit(3),
       supabase
@@ -47,7 +49,7 @@ export default async function HomePage() {
     ]);
     posts = (postsRes.data ?? []) as Post[];
     papers = (papersRes.data ?? []) as Paper[];
-    webinars = (webinarsRes.data ?? []) as Webinar[];
+    webinars = ((webinarsRes.data ?? []) as Webinar[]).filter((webinar) => !isWebinarPast(webinar));
   }
 
   const [featured, ...rest] = posts;

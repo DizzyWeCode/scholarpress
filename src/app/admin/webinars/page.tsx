@@ -292,10 +292,19 @@ function WebinarForm({
     status: webinar?.status ?? "upcoming",
   });
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
 
   async function save() {
-    if (!form.title.trim() || !form.starts_at) return;
+    if (!form.title.trim()) {
+      setError("Title is required.");
+      return;
+    }
+    if (!form.starts_at) {
+      setError("Date and time are required.");
+      return;
+    }
+    setError(null);
     setBusy(true);
     const payload = {
       title: form.title.trim(),
@@ -313,6 +322,7 @@ function WebinarForm({
       : await supabase.from("webinars").insert(payload);
     setBusy(false);
     if (!error) onSaved();
+    else setError(error.message);
   }
 
   return (
@@ -372,6 +382,7 @@ function WebinarForm({
             </select>
           </div>
         </div>
+        {error ? <p role="alert" className="mt-5 text-sm text-red-700">{error}</p> : null}
         <div className="mt-8 flex gap-3">
           <button
             onClick={save}

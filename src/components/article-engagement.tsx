@@ -151,7 +151,7 @@ export function ArticleEngagement({
       console.error("togglePostLike failed", err);
       setLiked(previousLiked);
       setLikes((count) => Math.max(0, count + (previousLiked ? 1 : -1)));
-      setError("Your like could not be saved. Please try again.");
+      setError(`Your like could not be saved: ${err instanceof Error ? err.message : "Please try again."}`);
     } finally {
       setBusy(false);
     }
@@ -179,8 +179,9 @@ export function ArticleEngagement({
       await load();
     } catch (err) {
       console.error("addComment failed", err);
-      setError("Your comment could not be posted. Please try again.");
-      push({ kind: "error", title: "Could not post comment", body: "Please try again." });
+      const message = err instanceof Error ? err.message : "Please try again.";
+      setError(`Your comment could not be posted: ${message}`);
+      push({ kind: "error", title: "Could not post comment", body: message });
     } finally {
       setBusy(false);
     }
@@ -206,7 +207,7 @@ export function ArticleEngagement({
       await load();
     } catch (err) {
       console.error("toggleCommentLike failed", err);
-      setError("Your reaction could not be saved. Please try again.");
+      setError(`Your reaction could not be saved: ${err instanceof Error ? err.message : "Please try again."}`);
     } finally {
       setBusy(false);
     }
@@ -256,7 +257,7 @@ export function ArticleEngagement({
       await load();
     } catch (err) {
       console.error("vote failed", err);
-      setError("Your vote could not be recorded. Please try again.");
+      setError(`Your vote could not be recorded: ${err instanceof Error ? err.message : "Please try again."}`);
     } finally {
       setBusy(false);
     }
@@ -287,7 +288,8 @@ export function ArticleEngagement({
 
       {error ? (
         <p
-          role="alert"
+          role="status"
+          aria-live="polite"
           className="mt-6 border border-ink/30 bg-paper-2 px-4 py-3 text-sm text-ink"
           style={{ borderRadius: 7 }}
         >

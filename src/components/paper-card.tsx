@@ -1,8 +1,10 @@
 import type { Paper } from "@/lib/types";
+import { normalizeDoi } from "@/lib/utils";
 import { ExternalLink, FileText } from "lucide-react";
 
 /** Publication entry: venue, year, authors, DOI / PDF links. */
 export function PaperCard({ paper }: { paper: Paper }) {
+  const doi = normalizeDoi(paper.doi);
   return (
     <article className="border-t border-line py-8">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
@@ -44,9 +46,9 @@ export function PaperCard({ paper }: { paper: Paper }) {
             {tag}
           </span>
         ))}
-        {paper.doi ? (
+        {doi ? (
           <a
-            href={`https://doi.org/${paper.doi}`}
+            href={`https://doi.org/${doi}`}
             target="_blank"
             rel="noopener noreferrer"
             className="ml-auto inline-flex items-center gap-1 text-xs text-ink-3 underline underline-offset-2 transition-colors hover:text-ink"

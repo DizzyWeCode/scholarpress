@@ -5,6 +5,7 @@ import { getSupabaseBrowser } from "@/lib/supabase/client";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useToast } from "@/components/toast";
 import type { Paper } from "@/lib/types";
+import { normalizeDoi } from "@/lib/utils";
 import { Plus, Trash2, X } from "lucide-react";
 
 const inputCls =
@@ -148,10 +149,20 @@ function PaperForm({
     status: paper?.status ?? "published",
   });
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
 
   async function save() {
-    if (!form.title.trim()) return;
+    if (!form.title.trim()) {
+      setError("Title is required.");
+      return;
+    }
+    const doi = normalizeDoi(form.doi);
+    if (form.doi.trim() && !doi) {
+      setError("Enter a valid DOI such as 10.1000/example.");
+      return;
+    }
+    setError(null);
     setBusy(true);
     const payload = {
       title: form.title.trim(),
@@ -159,7 +170,7 @@ function PaperForm({
       authors: form.authors.split(",").map((a) => a.trim()).filter(Boolean),
       venue: form.venue.trim() || null,
       year: form.year || null,
-      doi: form.doi.trim() || null,
+      doi,
       url: form.url.trim() || null,
       pdf_url: form.pdf_url.trim() || null,
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
@@ -172,6 +183,7 @@ function PaperForm({
       : await supabase.from("papers").insert(payload);
     setBusy(false);
     if (!error) onSaved();
+    else setError(error.message);
   }
 
   return (
@@ -244,6 +256,7 @@ function PaperForm({
             Feature on homepage
           </label>
         </div>
+        {error ? <p role="alert" className="mt-5 text-sm text-red-700">{error}</p> : null}
         <div className="mt-8 flex gap-3">
           <button
             onClick={save}

@@ -6,7 +6,7 @@ import { getSupabaseBrowser } from "@/lib/supabase/client";
 import { RichEditor } from "@/components/rich-editor";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useToast } from "@/components/toast";
-import { readingTimeFromDoc, slugify } from "@/lib/utils";
+import { isAllowedImageHost, readingTimeFromDoc, slugify } from "@/lib/utils";
 import { uploadPublicImage } from "@/lib/uploads/media";
 import type { Post, ReferenceItem, PostStatus } from "@/lib/types";
 import { ImagePlus, Plus, Trash2 } from "lucide-react";
@@ -38,9 +38,30 @@ export function PostEditor({ post }: { post?: Post }) {
   const [saving, setSaving] = useState<PostStatus | null>(null);
   const [coverUploading, setCoverUploading] = useState(false);
   const [message, setMessage] = useState("");
+  const [coverWarning, setCoverWarning] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const { push } = useToast();
   const coverInputRef = useRef<HTMLInputElement>(null);
+
+  function updateCoverUrl(value: string) {
+    setCoverUrl(value);
+    if (!value.trim()) {
+      setCoverWarning("");
+      return;
+    }
+    try {
+      const url = new URL(value);
+      setCoverWarning(
+        url.protocol !== "https:"
+          ? "Use an HTTPS image URL."
+          : isAllowedImageHost(value)
+            ? ""
+            : "This host is not configured for next/image; the article will use a plain image fallback.",
+      );
+    } catch {
+      setCoverWarning("Enter a complete HTTPS image URL.");
+    }
+  }
 
   async function uploadCover(file: File | undefined) {
     if (!file || coverUploading) return;
@@ -208,7 +229,7 @@ export function PostEditor({ post }: { post?: Post }) {
           <div>
             <label className={labelCls} htmlFor="pe-cover">Image URL</label>
             <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end">
-              <input id="pe-cover" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://…" className={inputCls} />
+              <input id="pe-cover" value={coverUrl} onChange={(e) => updateCoverUrl(e.target.value)} placeholder="https://…" className={inputCls} />
               <button
                 type="button"
                 onClick={() => coverInputRef.current?.click()}
@@ -226,6 +247,7 @@ export function PostEditor({ post }: { post?: Post }) {
                 onChange={(e) => uploadCover(e.target.files?.[0])}
               />
             </div>
+            {coverWarning ? <p className="mt-2 text-xs text-ink-3" role="status">{coverWarning}</p> : null}
           </div>
           <div className="grid gap-6 sm:grid-cols-2">
             <div>

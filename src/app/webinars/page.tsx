@@ -3,6 +3,7 @@ import { WebinarCard } from "@/components/webinar-card";
 import { Reveal } from "@/components/reveal";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { requireSignedIn } from "@/lib/auth";
+import { isWebinarPast } from "@/lib/utils";
 import type { Webinar } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -22,10 +23,17 @@ export default async function WebinarsPage() {
     .in("status", ["upcoming", "past"])
     .order("starts_at", { ascending: false });
   const all = (data ?? []) as Webinar[];
-  upcoming = all
+  const display = all.map((webinar) =>
+    webinar.status === "upcoming" && isWebinarPast(webinar)
+      ? { ...webinar, status: "past" as const }
+      : webinar,
+  );
+  upcoming = display
     .filter((w) => w.status === "upcoming")
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
-  past = all.filter((w) => w.status === "past");
+  past = display
+    .filter((w) => w.status === "past")
+    .sort((a, b) => b.starts_at.localeCompare(a.starts_at));
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
