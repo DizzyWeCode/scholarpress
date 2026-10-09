@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { redirect } from "next/navigation";
 import { getOwnerSession, getSupabaseServer } from "@/lib/supabase/server";
 import type { EmailPurpose, EmailSend, EmailStatus } from "@/lib/types";
+import { AdminPageHeader } from "@/components/admin-ui";
 
 export const dynamic = "force-dynamic";
 
@@ -95,12 +96,7 @@ export default async function AdminEmailPage() {
 
   return (
     <div>
-      <div className="flex items-baseline justify-between">
-        <h1 className="font-serif text-3xl tracking-tight text-ink">Email log</h1>
-        <span className="text-xs uppercase tracking-widest text-ink-4">
-          from the last {sends.length} sends
-        </span>
-      </div>
+      <AdminPageHeader eyebrow="Communication" title="Email log" description={`${totalAll} messages recorded across all delivery purposes.`} />
 
       {loadError && (
         <p className="mt-4 border-t border-line pt-4 text-sm text-red-700">
