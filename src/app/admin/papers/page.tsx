@@ -7,7 +7,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/toast";
 import type { Paper } from "@/lib/types";
 import { normalizeDoi } from "@/lib/utils";
-import { Plus, Trash2, X } from "lucide-react";
+import { LoaderCircle, Plus, Trash2, X } from "lucide-react";
 import { AdminButton, AdminPageHeader, StatusBadge } from "@/components/admin-ui";
 
 const inputCls =
@@ -60,7 +60,10 @@ export default function AdminPapersPage() {
 
       <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white px-5 shadow-sm">
         {papers === null ? (
-          <p className="text-sm text-ink-3">Loading…</p>
+          <p className="flex items-center gap-2 py-5 text-sm text-ink-3" role="status" aria-label="Loading papers">
+            <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
+            Loading papers
+          </p>
         ) : papers.length === 0 ? (
           <p className="border-t border-line py-12 text-sm text-ink-3">
             No papers yet.
@@ -141,8 +144,57 @@ function PaperForm({
     status: paper?.status ?? "published",
   });
   const [busy, setBusy] = useState(false);
+  const [fetchingDoi, setFetchingDoi] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function fetchFromDoi() {
+    const doi = normalizeDoi(form.doi);
+    if (!doi) {
+      setError("Enter a valid DOI such as 10.1000/example before fetching.");
+      return;
+    }
+    setError(null);
+    setFetchingDoi(true);
+    try {
+      const response = await fetch("/api/admin/papers/crossref", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ doi }),
+      });
+      const result = (await response.json()) as {
+        error?: string;
+        metadata?: {
+          title: string | null;
+          abstract: string | null;
+          authors: string[];
+          venue: string | null;
+          year: number | null;
+          doi: string;
+          url: string;
+        };
+      };
+      if (!response.ok || !result.metadata) {
+        setError(result.error ?? "Could not fetch DOI metadata.");
+        return;
+      }
+      const metadata = result.metadata;
+      setForm((current) => ({
+        ...current,
+        doi: metadata.doi,
+        title: current.title.trim() ? current.title : metadata.title ?? current.title,
+        abstract: current.abstract.trim() ? current.abstract : metadata.abstract ?? current.abstract,
+        authors: current.authors.trim() ? current.authors : metadata.authors.join(", "),
+        venue: current.venue.trim() ? current.venue : metadata.venue ?? current.venue,
+        year: current.year ?? metadata.year,
+        url: current.url.trim() ? current.url : metadata.url,
+      }));
+    } catch {
+      setError("Could not fetch DOI metadata. Check your connection and try again.");
+    } finally {
+      setFetchingDoi(false);
+    }
+  }
 
   async function save() {
     if (!form.title.trim()) {
@@ -212,7 +264,19 @@ function PaperForm({
           <div className="grid gap-6 sm:grid-cols-3">
             <div>
               <label className={labelCls} htmlFor="paper-doi">DOI</label>
-              <input id="paper-doi" value={form.doi} onChange={(e) => set("doi", e.target.value)} placeholder="10.1000/xyz123" className={`${inputCls} mt-2`} />
+              <div className="mt-2 flex items-center gap-2">
+                <input id="paper-doi" value={form.doi} onChange={(e) => set("doi", e.target.value)} placeholder="10.1000/xyz123" className={inputCls} />
+                <button
+                  type="button"
+                  onClick={() => void fetchFromDoi()}
+                  disabled={fetchingDoi || busy}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {fetchingDoi ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : null}
+                  {fetchingDoi ? "Fetching…" : "Fetch from DOI"}
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-ink-4">Crossref fills only blank fields; your edits are preserved.</p>
             </div>
             <div>
               <label className={labelCls} htmlFor="paper-url">Publisher URL</label>
