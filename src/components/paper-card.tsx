@@ -1,6 +1,7 @@
 import type { Paper } from "@/lib/types";
 import { normalizeDoi } from "@/lib/utils";
 import { ExternalLink, FileText } from "lucide-react";
+import Link from "next/link";
 
 /** Publication entry: venue, year, authors, DOI / PDF links. */
 export function PaperCard({ paper }: { paper: Paper }) {
@@ -38,6 +39,12 @@ export function PaperCard({ paper }: { paper: Paper }) {
         </p>
       ) : null}
       <div className="mt-4 flex flex-wrap items-center gap-2">
+        <Link
+          href={`/papers/${paper.id}`}
+          className="text-xs text-ink-3 underline underline-offset-2 transition-colors hover:text-ink"
+        >
+          Details
+        </Link>
         {paper.tags.map((tag) => (
           <span
             key={tag}

@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
-import { getSupabaseAnon } from "@/lib/supabase/public";
+import { requireSignedIn } from "@/lib/auth";
 import { ArticleBody } from "@/components/article-body";
 import { ReferenceList } from "@/components/reference-list";
 import { ShareButtons } from "@/components/share-buttons";
@@ -11,65 +11,32 @@ import { Reveal } from "@/components/reveal";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { ArticleEngagement } from "@/components/article-engagement";
 import { BookmarkButton } from "@/components/bookmark-button";
-import { SITE, absoluteOgImage, absoluteUrl } from "@/lib/site";
+import { CitationControl } from "@/components/citation-control";
+import { SITE, absoluteUrl } from "@/lib/site";
 import { excerptFromDoc, isAllowedImageHost } from "@/lib/utils";
 import type { Post } from "@/lib/types";
 
 export const revalidate = 60;
 
-async function getPost(slug: string): Promise<Post | null> {
-  const supabase = getSupabaseAnon();
-  if (!supabase) return null;
-  const { data } = await supabase
-    .from("posts")
-    .select("*")
-    .eq("slug", slug)
-    .eq("status", "published")
-    .single();
-  return (data as Post) ?? null;
-}
-
-export async function generateMetadata({
-  params,
-}: {
-  params: { slug: string };
-}): Promise<Metadata> {
-  const post = await getPost(params.slug);
-  if (!post) return { title: "Article not found" };
-  const description =
-    post.seo_description ?? post.excerpt ?? excerptFromDoc(post.content);
-  const title = post.seo_title ?? post.title;
-  const url = absoluteUrl(`/blog/${post.slug}`);
-  const ogImage = absoluteOgImage(post.cover_image_url);
-  return {
-    title,
-    description,
-    alternates: { canonical: url },
-    openGraph: {
-      type: "article",
-      title,
-      description,
-      url,
-      publishedTime: post.published_at ?? undefined,
-      authors: [SITE.name],
-      tags: post.tags,
-      images: [{ url: ogImage, alt: post.title }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [ogImage],
-    },
-  };
-}
+export const metadata: Metadata = {
+  title: "Members-only article",
+  description: "Sign in to read this article.",
+  robots: { index: false, follow: false },
+};
 
 export default async function ArticlePage({
   params,
 }: {
   params: { slug: string };
 }) {
-  const post = await getPost(params.slug);
+  const { supabase } = await requireSignedIn(`/blog/${params.slug}`);
+  const { data } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("slug", params.slug)
+    .eq("status", "published")
+    .single();
+  const post = (data as Post) ?? null;
   if (!post) notFound();
 
   const url = absoluteUrl(`/blog/${post.slug}`);
@@ -172,6 +139,16 @@ export default async function ArticlePage({
       <div className="mt-12 flex flex-col gap-6 border-t border-line pt-8 sm:flex-row sm:items-center sm:justify-between">
         <ShareButtons url={url} title={post.title} />
         <BookmarkButton postId={post.id} />
+      </div>
+
+      <div className="mt-8">
+        <CitationControl
+          title={post.title}
+          authors={[SITE.name]}
+          year={post.published_at ? new Date(post.published_at).getFullYear() : null}
+          url={url}
+          citationKey={`article${post.slug}`}
+        />
       </div>
 
       <ArticleEngagement postId={post.id} initialLikes={post.like_count ?? 0} />

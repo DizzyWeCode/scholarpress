@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Webinars",
   description: "Upcoming webinars and past recordings.",
+  robots: { index: false, follow: false },
 };
 
 export default async function WebinarsPage() {

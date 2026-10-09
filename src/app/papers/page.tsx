@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Research",
   description: `Peer-reviewed publications by ${SITE.name}.`,
+  robots: { index: false, follow: false },
 };
 
 export default async function PapersPage() {
