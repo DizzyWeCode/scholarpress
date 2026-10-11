@@ -2,6 +2,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { CalendarDays, Clock, Download, ExternalLink } from "lucide-react";
 import { WebinarRegistrationForm } from "@/components/webinar-registration-form";
+import { WebinarInterestForm } from "@/components/webinar-interest-form";
 import { getSupabaseAnon } from "@/lib/supabase/public";
 import type { Webinar } from "@/lib/types";
 
@@ -86,7 +87,7 @@ export default async function WebinarDetailPage({ params }: { params: { slug: st
         <aside className="space-y-8">
           {webinar.speaker_name ? <section className="border-l-2 border-indigo-500 pl-5"><p className="text-xs uppercase tracking-[0.25em] text-ink-4">Speaker</p><h2 className="mt-3 font-serif text-2xl text-ink">{webinar.speaker_name}</h2>{webinar.speaker_role ? <p className="mt-1 text-sm text-ink-3">{webinar.speaker_role}</p> : null}{webinar.speaker_bio ? <p className="mt-3 text-sm leading-relaxed text-ink-3">{webinar.speaker_bio}</p> : null}</section> : null}
           {resources.length > 0 ? <section><p className="text-xs uppercase tracking-[0.25em] text-ink-4">Resources</p><ul className="mt-4 grid gap-3">{resources.map((resource, index) => <li key={`${resource.label}-${index}`}><a href={resource.url || "#"} className="text-sm text-ink-2 underline underline-offset-2">{resource.label}</a></li>)}</ul></section> : null}
-          {webinar.course_cta_label && webinar.course_cta_url ? <section className="border border-line bg-indigo-50 p-6" style={{ borderRadius: 7 }}><p className="text-xs uppercase tracking-[0.2em] text-indigo-700">Continue learning</p><a href={webinar.course_cta_url} className="mt-3 inline-flex text-base font-medium text-indigo-950 underline underline-offset-4">{webinar.course_cta_label}</a></section> : null}
+          {webinar.course_cta_label && webinar.course_cta_url ? <section className="border border-line bg-indigo-50 p-6" style={{ borderRadius: 7 }}><p className="text-xs uppercase tracking-[0.2em] text-indigo-700">Continue learning</p><a href={webinar.course_cta_url} className="mt-3 inline-flex text-base font-medium text-indigo-950 underline underline-offset-4">{webinar.course_cta_label}</a></section> : <section className="border border-line bg-indigo-50 p-6" style={{ borderRadius: 7 }}><p className="text-xs uppercase tracking-[0.2em] text-indigo-700">Future learning</p><h2 className="mt-3 font-serif text-2xl tracking-tight text-indigo-950">Interested in a deeper course?</h2><p className="mt-3 text-sm leading-relaxed text-indigo-900">Tell us what format would help you learn this topic well. This is an interest list, not a purchase or commitment.</p><WebinarInterestForm webinarId={webinar.id} /></section>}
         </aside>
       </div>
     </div>
