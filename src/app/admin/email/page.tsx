@@ -37,7 +37,7 @@ function statusClass(status: EmailStatus): string {
   return "text-ink";
 }
 
-export default async function AdminEmailPage() {
+export default async function AdminEmailPage({ searchParams }: { searchParams: { status?: string } }) {
   const { user, isOwner } = await getOwnerSession();
   if (!user || !isOwner) redirect("/login");
 
@@ -51,7 +51,10 @@ export default async function AdminEmailPage() {
     supabase.from("email_sends").select("id", { count: "exact", head: true }),
   ]);
 
-  const sends = (rowsResult.data ?? []) as EmailSend[];
+  const allSends = (rowsResult.data ?? []) as EmailSend[];
+  const sends = searchParams.status === "failed"
+    ? allSends.filter((send) => send.status === "failed" || send.status === "bounced")
+    : allSends;
   const totalAll = totalResult.count ?? sends.length;
   const loadError = rowsResult.error?.message ?? null;
 
