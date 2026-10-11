@@ -9,6 +9,7 @@ export type WebinarPurpose = "webinar_announcement" | "webinar_reminder";
 export interface WebinarEmailTarget {
   id: string;
   title: string;
+  slug?: string | null;
   description?: string | null;
   starts_at: string;
   platform?: string | null;
@@ -99,8 +100,9 @@ export async function sendWebinarEmails(options: {
     : await alreadySent(db, purpose, webinar.id);
 
   const webinarDate = formatWebinarDate(webinar.starts_at);
-  const webinarUrl =
-    webinar.registration_url?.trim() || absoluteUrl("/webinars");
+  const webinarUrl = webinar.slug
+    ? absoluteUrl(`/webinars/${webinar.slug}`)
+    : webinar.registration_url?.trim() || absoluteUrl("/webinars");
 
   for (let i = 0; i < recipients.length; i += 1) {
     const email = recipients[i];

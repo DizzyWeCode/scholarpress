@@ -1,5 +1,14 @@
 export type PostStatus = "draft" | "published" | "scheduled";
-export type WebinarStatus = "upcoming" | "past" | "draft";
+export type WebinarStatus =
+  | "draft"
+  | "scheduled"
+  | "registration_open"
+  | "upcoming"
+  | "live"
+  | "past"
+  | "replay_available"
+  | "archived"
+  | "cancelled";
 
 export interface ReferenceItem {
   label: string;
@@ -60,13 +69,64 @@ export interface Paper {
 export interface Webinar {
   id: string;
   title: string;
+  slug: string;
   description: string | null;
+  promise: string | null;
   starts_at: string;
   duration_minutes: number | null;
   platform: string | null;
+  timezone: string;
+  format: string | null;
   registration_url: string | null;
   recording_url: string | null;
+  hero_image_url: string | null;
+  hero_image_alt: string | null;
+  thumbnail_image_url: string | null;
+  thumbnail_image_alt: string | null;
+  image_credit: string | null;
+  image_credit_url: string | null;
+  speaker_name: string | null;
+  speaker_role: string | null;
+  speaker_bio: string | null;
+  speaker_image_url: string | null;
+  speaker_image_alt: string | null;
+  takeaways: string[];
+  agenda: string[];
+  resources: ReferenceItem[];
+  registration_mode: "first_party" | "external" | "hybrid";
+  registration_open_at: string | null;
+  registration_close_at: string | null;
+  replay_visibility: "unpublished" | "public" | "registered_only" | "members_only";
+  replay_available_at: string | null;
+  course_cta_label: string | null;
+  course_cta_url: string | null;
+  related_post_ids: string[];
   status: WebinarStatus;
+  created_at: string;
+}
+
+export interface WebinarAccess {
+  webinar_id: string;
+  provider: string;
+  provider_event_id: string | null;
+  join_url: string | null;
+  host_url: string | null;
+  updated_at: string;
+}
+
+export interface WebinarInterestSignal {
+  id: string;
+  webinar_id: string | null;
+  email: string;
+  full_name: string | null;
+  signal_type: string;
+  experience_level: string | null;
+  preferred_format: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  first_touch_at: string | null;
   created_at: string;
 }
 

@@ -14,6 +14,10 @@ const inputCls =
   "w-full border-0 border-b border-line bg-transparent px-0 py-2 text-sm text-ink outline-none transition-colors placeholder:text-ink-4 focus:border-ink";
 const labelCls = "block text-xs uppercase tracking-widest text-ink-4";
 
+function slugify(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 160);
+}
+
 export default function AdminWebinarsPage() {
   const [webinars, setWebinars] = useState<Webinar[] | null>(null);
   const [editing, setEditing] = useState<Webinar | null>(null);
@@ -273,12 +277,14 @@ function WebinarForm({
     iso ? format(new Date(iso), "yyyy-MM-dd'T'HH:mm") : "";
   const [form, setForm] = useState({
     title: webinar?.title ?? "",
+    slug: webinar?.slug ?? "",
     description: webinar?.description ?? "",
     starts_at: toLocal(webinar?.starts_at),
     duration_minutes: webinar?.duration_minutes ?? 60,
     platform: webinar?.platform ?? "Zoom",
     registration_url: webinar?.registration_url ?? "",
     recording_url: webinar?.recording_url ?? "",
+    registration_mode: webinar?.registration_mode ?? "first_party",
     status: webinar?.status ?? "upcoming",
   });
   const [busy, setBusy] = useState(false);
@@ -298,12 +304,14 @@ function WebinarForm({
     setBusy(true);
     const payload = {
       title: form.title.trim(),
+      slug: slugify(form.slug || form.title),
       description: form.description.trim() || null,
       starts_at: new Date(form.starts_at).toISOString(),
       duration_minutes: form.duration_minutes || null,
       platform: form.platform.trim() || null,
       registration_url: form.registration_url.trim() || null,
       recording_url: form.recording_url.trim() || null,
+      registration_mode: form.registration_mode,
       status: form.status,
     };
     const supabase = getSupabaseBrowser();
@@ -332,6 +340,10 @@ function WebinarForm({
             <label className={labelCls} htmlFor="webinar-description">Description</label>
             <textarea id="webinar-description" value={form.description} onChange={(e) => set("description", e.target.value)} rows={3} className={`${inputCls} mt-2 resize-y`} />
           </div>
+          <div>
+            <label className={labelCls} htmlFor="webinar-slug">Public URL slug</label>
+            <input id="webinar-slug" value={form.slug} onChange={(e) => set("slug", e.target.value)} placeholder="malaria-treatment-pharmacology" className={`${inputCls} mt-2`} />
+          </div>
           <div className="grid gap-6 sm:grid-cols-3">
             <div>
               <label className={labelCls} htmlFor="webinar-starts-at">Date &amp; time</label>
@@ -352,6 +364,14 @@ function WebinarForm({
               <input id="webinar-registration-url" value={form.registration_url} onChange={(e) => set("registration_url", e.target.value)} placeholder="https://zoom.us/webinar/register/…" className={`${inputCls} mt-2`} />
             </div>
             <div>
+              <label className={labelCls} htmlFor="webinar-registration-mode">Registration mode</label>
+              <select id="webinar-registration-mode" value={form.registration_mode} onChange={(e) => set("registration_mode", e.target.value)} className={`${inputCls} mt-2`}>
+                <option value="first_party">ScholarPress registration</option>
+                <option value="hybrid">ScholarPress + external provider</option>
+                <option value="external">External provider only</option>
+              </select>
+            </div>
+            <div>
               <label className={labelCls} htmlFor="webinar-recording-url">Recording URL (for past sessions)</label>
               <input id="webinar-recording-url" value={form.recording_url} onChange={(e) => set("recording_url", e.target.value)} className={`${inputCls} mt-2`} />
             </div>
@@ -360,7 +380,12 @@ function WebinarForm({
             <label className={labelCls} htmlFor="webinar-status">Status</label>
             <select id="webinar-status" value={form.status} onChange={(e) => set("status", e.target.value)} className={`${inputCls} mt-2`}>
               <option value="upcoming">Upcoming</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="registration_open">Registration open</option>
+              <option value="live">Live</option>
               <option value="past">Past (recording)</option>
+              <option value="replay_available">Replay available</option>
+              <option value="cancelled">Cancelled</option>
               <option value="draft">Draft (hidden)</option>
             </select>
           </div>

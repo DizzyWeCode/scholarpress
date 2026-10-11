@@ -19,7 +19,7 @@ export async function GET(
     .from("webinars")
     .select("id, title, description, starts_at, duration_minutes, platform, registration_url, status")
     .eq("id", params.id)
-    .in("status", ["upcoming", "past"])
+    .in("status", ["scheduled", "registration_open", "upcoming", "live", "past", "replay_available"])
     .maybeSingle();
   if (error || !webinar) return NextResponse.json({ error: "Webinar not found" }, { status: 404 });
 
