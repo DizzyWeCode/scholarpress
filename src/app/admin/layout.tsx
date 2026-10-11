@@ -16,7 +16,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="admin-theme min-h-screen bg-paper text-ink">
       <div className="flex min-h-screen">
-        <aside className="hidden w-64 shrink-0 border-r border-line bg-paper-2 lg:block">
+        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col overflow-y-auto overscroll-contain border-r border-line bg-paper-2 lg:flex">
           <div className="flex h-20 items-center border-b border-line px-6">
             <Link href="/admin" className="font-serif text-xl tracking-tight text-ink">Dr Fraction Studio</Link>
           </div>
