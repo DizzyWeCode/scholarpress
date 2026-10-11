@@ -20,6 +20,7 @@ function slugify(value: string): string {
 
 export default function AdminWebinarsPage() {
   const [webinars, setWebinars] = useState<Webinar[] | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | Webinar["status"]>("all");
   const [editing, setEditing] = useState<Webinar | null>(null);
   const [creating, setCreating] = useState(false);
   const [announcing, setAnnouncing] = useState<Webinar | null>(null);
@@ -38,6 +39,21 @@ export default function AdminWebinarsPage() {
     load();
   }, []);
 
+  useEffect(() => {
+    const requestedStatus = new URLSearchParams(window.location.search).get("status");
+    if (requestedStatus && ["draft", "scheduled", "registration_open", "upcoming", "live", "past", "replay_available", "archived", "cancelled"].includes(requestedStatus)) setStatusFilter(requestedStatus as Webinar["status"]);
+  }, []);
+
+  function changeStatus(nextStatus: typeof statusFilter) {
+    setStatusFilter(nextStatus);
+    const url = new URL(window.location.href);
+    if (nextStatus === "all") url.searchParams.delete("status");
+    else url.searchParams.set("status", nextStatus);
+    window.history.replaceState({}, "", url);
+  }
+
+  const visibleWebinars = (webinars ?? []).filter((webinar) => statusFilter === "all" || webinar.status === statusFilter);
+
   async function remove(id: string) {
     const { error } = await getSupabaseBrowser().from("webinars").delete().eq("id", id);
     setPendingDelete(null);
@@ -55,14 +71,17 @@ export default function AdminWebinarsPage() {
       )}
 
       <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white px-5 shadow-sm">
+        <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 py-3">
+          {(["all", "upcoming", "past", "draft", "cancelled"] as const).map((status) => <button key={status} type="button" onClick={() => changeStatus(status)} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${statusFilter === status ? "border-indigo-600 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-500 hover:border-indigo-300 hover:text-slate-900"}`}>{status === "all" ? "All" : status.replace("_", " ")}</button>)}
+        </div>
         {webinars === null ? (
           <AdminListSkeleton rows={4} />
-        ) : webinars.length === 0 ? (
+        ) : visibleWebinars.length === 0 ? (
           <p className="border-t border-line py-12 text-sm text-ink-3">
-            No webinars yet.
+            No webinars match this view.
           </p>
         ) : (
-          webinars.map((w) => (
+          visibleWebinars.map((w) => (
             <div
               key={w.id}
               className="grid gap-1 border-t border-line py-5 sm:grid-cols-[1fr_auto_auto] sm:items-baseline sm:gap-6"

@@ -52,6 +52,8 @@ export default function AdminCommentsPage() {
 
   useEffect(() => {
     void load();
+    const requestedStatus = new URLSearchParams(window.location.search).get("status");
+    if (requestedStatus === "visible" || requestedStatus === "hidden" || requestedStatus === "deleted") setFilter(requestedStatus);
   }, []);
 
   const visible = useMemo(() => {
@@ -59,6 +61,14 @@ export default function AdminCommentsPage() {
     if (filter === "all") return comments;
     return comments.filter((comment) => comment.status === filter);
   }, [comments, filter]);
+
+  function changeFilter(nextFilter: StatusFilter) {
+    setFilter(nextFilter);
+    const url = new URL(window.location.href);
+    if (nextFilter === "all") url.searchParams.delete("status");
+    else url.searchParams.set("status", nextFilter);
+    window.history.replaceState({}, "", url);
+  }
 
   async function setStatus(id: string, status: Comment["status"]) {
     setBusy(true);
@@ -111,7 +121,7 @@ export default function AdminCommentsPage() {
         {FILTERS.map((option) => (
           <button
             key={option.value}
-            onClick={() => setFilter(option.value)}
+            onClick={() => changeFilter(option.value)}
             className={`rounded-full border px-4 py-1.5 text-xs transition-colors ${
               filter === option.value
                 ? "border-ink bg-ink text-paper"
