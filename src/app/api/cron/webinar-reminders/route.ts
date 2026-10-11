@@ -59,7 +59,7 @@ export async function GET(request: Request) {
   const { data: webinars, error: webinarError } = await db
     .from("webinars")
     .select("*")
-    .eq("status", "upcoming")
+    .in("status", ["upcoming", "scheduled", "registration_open"])
     .gt("starts_at", now.toISOString())
     .lte("starts_at", windowEnd.toISOString())
     .order("starts_at", { ascending: true })
@@ -81,12 +81,19 @@ export async function GET(request: Request) {
       { status: 500 },
     );
   }
-  const recipients = Array.from(
-    new Set((subscribers ?? []).map((row) => String(row.email).toLowerCase())),
-  );
-
   const results: Array<Record<string, unknown>> = [];
   for (const webinar of (webinars ?? []) as Webinar[]) {
+    const { data: registrations } = await db
+      .from("webinar_registrations")
+      .select("email")
+      .eq("webinar_id", webinar.id)
+      .neq("status", "cancelled");
+    const recipients = Array.from(
+      new Set([
+        ...(subscribers ?? []).map((row) => String(row.email).toLowerCase()),
+        ...(registrations ?? []).map((row) => String(row.email).toLowerCase()),
+      ]),
+    );
     const result = await sendWebinarEmails({
       webinar,
       purpose: "webinar_reminder",
@@ -94,14 +101,14 @@ export async function GET(request: Request) {
       db,
       delayMs: 550,
     });
-    results.push({ webinarId: webinar.id, title: webinar.title, ...result });
+    results.push({ webinarId: webinar.id, title: webinar.title, recipients: recipients.length, ...result });
   }
 
   return NextResponse.json({
     ok: true,
     window: `${REMINDER_WINDOW_HOURS}h`,
     checkedAt: now.toISOString(),
-    recipients: recipients.length,
+    recipients: results.reduce((total, result) => total + Number(result.recipients ?? 0), 0),
     webinars: results,
   });
 }

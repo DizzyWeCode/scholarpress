@@ -33,7 +33,7 @@ export function WebinarCard({ webinar, dark = false }: { webinar: Webinar; dark?
             dark ? "border-paper/30 text-paper/70" : "border-line text-ink-3"
           }`}
         >
-          {isUpcoming ? "Upcoming" : isPast ? "Recording" : "Draft"}
+          {isUpcoming ? "Upcoming" : isPast ? "Recording" : webinar.status === "cancelled" ? "Cancelled" : "Draft"}
         </span>
         <span className={`text-xs ${dark ? "text-paper/50" : "text-ink-4"}`}>
           {dateFormatter.format(starts)}
@@ -63,16 +63,14 @@ export function WebinarCard({ webinar, dark = false }: { webinar: Webinar; dark?
           </span>
         ) : null}
       </div>
-      {isUpcoming && webinar.registration_url ? (
+      {isUpcoming ? (
         <a
-          href={webinar.registration_url}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={`/webinars/${webinar.slug || webinar.id}`}
           className={`mt-2 inline-flex w-fit items-center rounded-full px-5 py-2 text-sm transition-opacity hover:opacity-80 ${
             dark ? "bg-paper text-ink" : "bg-ink text-paper"
           }`}
         >
-          Register free
+          {webinar.registration_mode === "external" ? "View event" : "Save your seat"}
         </a>
       ) : null}
       {isUpcoming ? (
