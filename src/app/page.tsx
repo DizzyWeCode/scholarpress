@@ -8,6 +8,7 @@ import { Reveal } from "@/components/reveal";
 import { PostRow } from "@/components/post-card";
 import { WebinarCard } from "@/components/webinar-card";
 import { NewsletterForm } from "@/components/newsletter-form";
+import { HeroSlideshow } from "@/components/hero-slideshow";
 import type { Post, Paper, Webinar } from "@/lib/types";
 import { isWebinarPast } from "@/lib/utils";
 
@@ -47,18 +48,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <section className="border-b border-line bg-paper-2">
-        <div className="mx-auto grid max-w-6xl gap-8 px-4 pb-12 pt-6 sm:gap-12 sm:px-8 sm:pb-28 sm:pt-24 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
-          <div className="order-2 lg:order-1">
-            <p className="text-xs uppercase tracking-[0.25em] text-ink-4">A living scholarly platform</p>
-            <h1 className="mt-5 max-w-3xl font-serif text-[2.7rem] leading-[1.02] tracking-[-0.035em] text-ink sm:mt-6 sm:text-7xl">{SITE.tagline}</h1>
-            <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-3 sm:mt-7 sm:text-lg">Research, writing, and public learning for better decisions about medicines and health — and the questions connecting the work.</p>
-            <div className="mt-7 flex flex-wrap gap-3 sm:mt-9"><Link href={featured ? `/blog/${featured.slug}` : "/blog"} className="rounded-full bg-ink px-5 py-2.5 text-sm text-paper transition-opacity hover:opacity-80">Explore the current work</Link><Link href="#ways-in" className="rounded-full border border-ink px-5 py-2.5 text-sm text-ink transition-colors hover:bg-ink hover:text-paper">Find your way in</Link></div>
-            <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm text-ink-3 sm:mt-8"><Link href="/papers" className="underline underline-offset-4 hover:text-ink">Research</Link><Link href="/webinars" className="underline underline-offset-4 hover:text-ink">Events</Link><Link href="#newsletter" className="underline underline-offset-4 hover:text-ink">Follow the work</Link></div>
-          </div>
-          <Reveal delay={160} className="order-1 lg:order-2"><figure><div className="relative aspect-[4/3] overflow-hidden rounded-[1.25rem] border border-ink/10 bg-ink shadow-[0_18px_50px_rgba(10,10,10,0.14)]"><Image src={SITE.images.hero.src} alt={SITE.images.hero.alt} fill sizes="(max-width: 1024px) 100vw, 480px" className="object-cover opacity-90" priority /><div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/85 via-ink/30 to-transparent p-5 pt-20 text-paper sm:p-7 sm:pt-28"><p className="text-[0.65rem] uppercase tracking-[0.24em] text-paper/70">Current focus</p><p className="mt-2 max-w-xs font-serif text-2xl leading-tight sm:text-3xl">Evidence that can travel beyond the laboratory.</p></div></div><figcaption className="mt-3 px-1 text-xs leading-relaxed text-ink-4">Clinical pharmacology, malaria research, teaching, and public conversation.</figcaption></figure></Reveal>
-        </div>
-      </section>
+      <HeroSlideshow />
 
       <section id="ways-in" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-20 sm:px-8 sm:py-24">
         <Reveal><div className="flex items-end justify-between gap-6"><div><p className="text-xs uppercase tracking-[0.25em] text-ink-4">Choose your way in</p><h2 className="mt-4 font-serif text-4xl tracking-tight text-ink sm:text-5xl">Begin with what brings you here.</h2></div><Compass className="hidden h-7 w-7 text-ink-4 sm:block" aria-hidden /></div><p className="mt-5 max-w-2xl text-base leading-relaxed text-ink-3">The work moves between research, writing, teaching, and conversation. Take the route that matches your question today.</p></Reveal>
