@@ -1,4 +1,4 @@
-# ScholarPress Content, Research, Events, Email, and Community Workflow Architecture
+# ScholarPress Product, Content, Research, Events, Email, and Community Workflow Architecture
 
 ## Purpose
 
@@ -65,6 +65,103 @@ CRediT is a taxonomy of contributor roles, not an authorship test. A person can 
 Schema.org uses **EventSeries** for a collection of related events and **Event** for each occurrence. A recording should normally be modeled as an asset or on-demand resource related to the event, not as a replacement for the original scheduled event. [14]
 
 For email, Resend uses **Broadcasts** for bulk marketing mail and **Sending** for transactional email. It uses **Segments** for sender-controlled targeting and **Topics** for recipient-controlled preferences. ScholarPress should use those terms consistently rather than calling every message a newsletter or every recipient group an audience. [15] [16]
+
+## Product and marketing framing
+
+The site should not be designed as an academic archive with marketing added at the end. It is a knowledge product with a public editorial front door, a research library, an event engine, an owned audience, and a future learning offer.
+
+That means every major page needs two descriptions:
+
+1. **What the thing is.** This is the editorial or scholarly definition: a journal article, research report, event, topic, or newsletter issue.
+2. **What job the thing performs.** This is the product definition: attract the right visitor, explain a difficult idea, build trust, capture an email preference, register an attendee, create a return visit, or open a path toward a course or professional enquiry.
+
+Do not force every visitor into a commercial sales funnel. For Dr Fraction, the more accurate model is a **relationship journey**:
+
+**Discover → Understand → Follow → Participate → Return → Learn or enquire.**
+
+The equivalent product states are:
+
+- **Visitor** — has arrived through search, a shared link, social media, a partner, or a direct visit.
+- **Engaged reader** — has consumed or explored meaningful content.
+- **Subscriber** — has explicitly opted into one or more email topics.
+- **Registrant** — has registered for an event or resource.
+- **Attendee** — has attended or meaningfully engaged with an event.
+- **Learning-interest contact** — has asked to hear about a future course, cohort, or learning opportunity.
+- **Client or learner** — should only be introduced when the platform actually supports a paid course, service, or learner relationship.
+
+Use **lifecycle stage** for this broad relationship progression and **interaction status** for the current action, such as registered, attended, no-show, replay-viewed, or replied. Do not label every subscriber or event registrant a “lead.” HubSpot’s lifecycle-stage model distinguishes a subscriber from a person who has converted through a deeper interaction, and Customer.io similarly separates people, events, segments, automations, broadcasts, and transactional messages. [17] [18]
+
+### The product vocabulary
+
+Use these terms in product decisions and admin copy:
+
+- **Audience** — the people ScholarPress serves as a whole.
+- **Persona or audience group** — a meaningful human group, such as clinicians, researchers, students, or malaria-program professionals. Do not create personas without evidence.
+- **Contact** — a known person with an email or account record.
+- **Segment** — a sender-defined group used for targeting.
+- **Topic** — a subscriber-facing preference or a subject area, depending on context; label the distinction clearly in the UI.
+- **Content type** — the schema of an item, such as Writing, Research output, Event, or Resource.
+- **Content item** — one entry of a content type.
+- **Content asset** — a reusable image, PDF, recording, slide deck, or downloadable file.
+- **Series** — a planned set of related content or events with a shared promise.
+- **Campaign** — a coordinated promotion with an objective, audience, message, channel, CTA, and measurement window.
+- **Journey** — a sequence of experiences or messages across lifecycle stages.
+- **Call to action (CTA)** — the next action the page is asking a visitor to take.
+- **Conversion** — a defined completion, such as subscribing, registering, attending, downloading, replying, or expressing course interest.
+- **Offer** — what the visitor receives in exchange for the requested action. For a newsletter, this may be ongoing insight; for an event, it is the promised experience; for a course, it is the learning outcome.
+
+The CMS should use **content type** and **content item** for structure. Contentful uses this distinction to model structured fields, reusable assets, and references between content types. [21] The marketing workspace should use **campaign**, **journey**, **audience**, **CTA**, and **conversion** for growth operations. Mixing these layers is what makes many CMSs feel confusing: a database field is not automatically a marketing strategy.
+
+### Every page needs a promise and a next step
+
+Each public content item should have an editorial promise and a primary CTA. The promise answers, “Why should this person spend time here?” The CTA answers, “What is the most useful next step after they have done so?”
+
+Examples:
+
+- A Writing item may use **Read the practical explanation** or **Explore the research behind this idea**.
+- A Research output may use **Read the accessible summary**, **View the publication**, or **Join the related discussion**.
+- An Event may use **Register**, **Add to calendar**, **Watch the replay**, or **Explore the learning pathway**.
+- A Topic page may use **Follow this topic** or **Start with the essential reading**.
+- A future Course page may use **Join the interest list**, **View the syllabus**, or **Apply**, depending on the actual offer.
+
+Do not place five competing buttons on every card. Store a primary CTA and optional secondary CTAs with a reason, destination, and tracking identity. A link to an external publisher is a legitimate CTA when that is the visitor’s intent; it should not be hidden behind an unnecessary ScholarPress detour.
+
+### Campaign and journey layer
+
+Publishing content and marketing content are related but not identical actions. Publishing makes an item available. A campaign decides whether, where, when, and to whom that item should be promoted.
+
+For each promotion, store:
+
+- objective;
+- audience or segment;
+- lifecycle stage;
+- source content or offer;
+- primary CTA;
+- channels;
+- campaign name and UTM identity;
+- start and end dates;
+- approval state;
+- owner;
+- success metric;
+- resulting conversions.
+
+The minimum campaign types should be **publication announcement**, **newsletter issue**, **event promotion**, **event reminder**, **replay promotion**, **course-interest nurture**, and **re-engagement**. A campaign may use email, the website, social links, partner links, or a combination of channels.
+
+An automation is not the same thing as a campaign. A **campaign** is a coordinated initiative with a goal and reporting window. An **automation** is the rule or workflow that executes a step when a trigger or condition occurs. A **broadcast** is a bulk message send. A **transactional message** responds to an individual action. A **journey** is the sequence of experiences or messages a person moves through.
+
+### Product metrics that matter
+
+Do not optimize for page views alone. Track the smallest useful set of metrics by product job:
+
+- **Discovery:** qualified landing visits, source/referral, search impressions, and topic entry points.
+- **Engagement:** engaged reading, scroll or completion signals where reliable, return visits, related-content clicks, and replies.
+- **Audience growth:** new subscribers, subscription conversion rate, topic preference, consent source, and unsubscribe rate.
+- **Event performance:** landing-page conversion, registration count, attendance conversion, no-show rate, engagement, replay views, and post-event CTA conversion.
+- **Learning demand:** course-interest submissions, syllabus views, waitlist conversion, and source event/topic.
+- **Editorial health:** publishing frequency, content freshness, orphaned content, broken relationships, and percentage of items with a clear CTA.
+- **Email health:** delivery, bounce, complaint, unsubscribe, click, and conversion metrics by campaign and topic.
+
+Event marketing platforms commonly separate registration, attendance, engagement, and post-event conversion. ON24 calls the proportion of registrants who attend the **attendance conversion rate**, while HubSpot emphasizes tracking attendee behavior from registration through post-event conversion. Those terms should appear in the Event analytics workspace instead of a single vague “views” number. [19] [20]
 
 ## Information architecture
 
@@ -759,3 +856,8 @@ For every milestone, validate:
 [14]: https://schema.org/EventSeries "Schema.org EventSeries"
 [15]: https://resend.com/docs/dashboard/broadcasts/introduction "Resend Broadcasts versus transactional Sending"
 [16]: https://resend.com/docs/knowledge-base/why-use-topics "Resend Topics versus Segments"
+[17]: https://knowledge.hubspot.com/records/use-lifecycle-stages "HubSpot contact and company lifecycle stages"
+[18]: https://docs.customer.io/messaging/journeys-overview/ "Customer.io people, objects, segments, journeys, broadcasts, and transactional messages"
+[19]: https://www.on24.com/glossary/attendance-conversion-rate/ "ON24 attendance conversion rate"
+[20]: https://www.hubspot.com/marketing-hub-for-events "HubSpot event registration, engagement, follow-up, and conversion tracking"
+[21]: https://www.contentful.com/help/content-models/content-modelling-basics/ "Contentful content models, content types, fields, assets, and references"
