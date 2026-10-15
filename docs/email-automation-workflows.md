@@ -8,7 +8,7 @@ ScholarPress should separate **Broadcasts**, **Automations**, and **Transactiona
 - An **Automation** is a rule or journey that responds to a trigger and may send one or more messages over time.
 - A **Transactional message** is a one-to-one operational response to an individual action. Examples: registration confirmation, calendar link, event change, password reset, or unsubscribe confirmation.
 
-Publishing a Writing item, Research output, or Event should never send a broadcast automatically unless the owner has explicitly enabled that automation and its audience, topic, sender, and approval policy.
+Publishing a Blog post, Research output, or Event should never send a broadcast automatically unless the owner has explicitly enabled that automation and its audience, topic, sender, and approval policy.
 
 ## Sender conventions
 
@@ -16,7 +16,7 @@ Use a verified domain and make the sender recognizable as Dr Fraction. Store sen
 
 | Purpose | From | Reply-To | Message class | Notes |
 | --- | --- | --- | --- | --- |
-| Newsletter and publication broadcasts | `Dr Fraction <newsletter@dr-fraction.me>` | `hello@dr-fraction.me` | Broadcast | Use for regular letters, writing announcements, and research announcements. |
+| Newsletter and publication broadcasts | `Dr Fraction <newsletter@dr-fraction.me>` | `hello@dr-fraction.me` | Broadcast | Use for regular letters, Blog post announcements, and research announcements. |
 | Event promotion and event logistics | `Dr Fraction <events@dr-fraction.me>` | `events@dr-fraction.me` | Broadcast or transactional | Replies should be monitored during active event campaigns. |
 | Relationship and collaboration | `Dr Fraction <hello@dr-fraction.me>` | `hello@dr-fraction.me` | Transactional | Use for contact, speaking, teaching, and collaboration responses. |
 | Operational notifications | `Dr Fraction <notifications@dr-fraction.me>` | `hello@dr-fraction.me` | Transactional | Use for moderation, delivery, and system notices. |
@@ -70,7 +70,7 @@ A registration for an event grants permission for event logistics only unless th
 
 ## Workflow 2: publication announcement draft
 
-**Trigger:** a Writing item or Research output changes to `published`.
+**Trigger:** a Blog post or Research output changes to `published`.
 
 **Default behavior:** create a Broadcast draft, do not send automatically.
 
@@ -117,7 +117,7 @@ A registration for an event grants permission for event logistics only unless th
 
 **Audience:** a Segment of contacts subscribed to the Newsletter topic.
 
-**Content model:** a newsletter issue is a campaign/content item with a subject, preview text, intro, selected Writing/Research/Event blocks, primary CTA, secondary links, topic, send time, and archive URL.
+**Content model:** a newsletter issue is a campaign/content item with a subject, preview text, intro, selected Blog/Research/Event blocks, primary CTA, secondary links, topic, send time, and archive URL.
 
 **Lifecycle:** Draft → Internal review → Test sent → Scheduled → Sending → Sent → Reported.
 

@@ -12,7 +12,7 @@ The shell should expose a small number of durable routes while making deeper dis
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │ Optional current-message banner                                  Dismiss     │
 ├──────────────────────────────────────────────────────────────────────────────┤
-│ [Dr Fraction mark]  Writing⌄  Research⌄  Events⌄  Resources⌄  About⌄  Follow  [⌕] │
+│ [Dr Fraction mark]  Blog  Events⌄  Resources⌄  About⌄  Follow  [⌕]          │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -30,10 +30,9 @@ Do not put a permanent sales message into the announcement strip. If there is no
 
 | Trigger | Destination | Dropdown purpose |
 | --- | --- | --- |
-| Writing | `/blog` | Help visitors browse essays, notes, explainers, and the writing archive. |
-| Research | `/papers` initially, later `/research` | Distinguish publications, research themes, and accessible research explanations. |
+| Blog | `/blog` | Help visitors browse essays, notes, explainers, and the blog archive. |
 | Events | `/webinars` initially, later `/events` | Show upcoming events, event series, and recordings/resources. |
-| Resources | `/resources` or a meaningful landing page | Collect Topics, Start here, guides, reading lists, and newsletter archive. |
+| Resources | `/resources` or a meaningful landing page | Collect Topics, Research Papers, Start here, guides, reading lists, and newsletter archive. |
 | About | `/about` | Explain Dr Fraction, current interests, and ways to work together. |
 | Follow | `/#newsletter` or `/newsletter` | Make the relationship offer and preference choices clear. |
 | Search | Search overlay/page | Search the connected library by title, topic, content type, and date. |
@@ -48,7 +47,7 @@ Do not expose empty Teaching, Books, Courses, or Projects routes. Add them only 
                          │ Essays, notes, reviews, and conversations│
                          ├──────────────────────────────────────────┤
                          │ All writing                              │
-                         │ Browse the complete writing archive      │
+                         │ Browse the complete Blog archive         │
                          │                                          │
                          │ Start here                               │
                          │ A curated route into the work            │
@@ -61,19 +60,12 @@ Use one primary landing link, two or three meaningful child links, and an option
 
 Recommended menus:
 
-**Writing**
+**Blog**
 
-- All writing
-- Start here
+- Blog archive
+- Latest posts
 - Essays and notes
 - Explore themes
-
-**Research**
-
-- Research library
-- Publications and outputs
-- Research themes
-- Methods and findings
 
 **Events**
 
@@ -85,6 +77,7 @@ Recommended menus:
 **Resources**
 
 - Topics
+- Research Papers
 - Start here
 - Guides and reading lists
 - Newsletter archive
@@ -140,8 +133,7 @@ Required behavior:
 │                                     │
 │         Full-width menu panel       │
 │                                     │
-│ Writing                         ›   │
-│ Research                        ›   │
+│ Blog                            →   │
 │ Events                          ›   │
 │ Resources                      ›   │
 │ About                           ›   │
@@ -177,12 +169,12 @@ Do not place a second “Newsletter & sign in” link at the bottom if the produ
 │ [Research] Title                                                   2026       │
 │ Short excerpt and topic context                                             │
 │                                                                              │
-│ [Writing] Title                                                    2025       │
+│ [Blog] Title                                                       2025       │
 │ Short excerpt and topic context                                             │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Search should be a useful discovery state, not merely an input in the header. Persist the query in the URL. Support content-type filters and useful empty states such as Start here, Browse Topics, Latest Writing, and Upcoming Events.
+Search should be a useful discovery state, not merely an input in the header. Persist the query in the URL. Support content-type filters and useful empty states such as Start here, Browse Topics, Latest Blog Posts, Research Papers, and Upcoming Events.
 
 ## Current-message banner wireframe
 
@@ -231,5 +223,6 @@ The navigation is ready when:
 - the page does not scroll behind an open mobile menu;
 - no empty product section appears in navigation;
 - the current announcement strip is optional and dismissible;
-- navigation labels match the product terminology: Writing, Research, Events, Resources, Follow, and Search;
+- navigation labels match the product terminology: Blog, Events, Resources, About, Follow, and Search;
+- Research Papers is discoverable from Resources without becoming a competing top-level route;
 - automated tests cover pointer, keyboard, touch, route-change, and reduced-motion states.

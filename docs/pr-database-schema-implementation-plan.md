@@ -34,7 +34,7 @@ Create:
 - `content_series_items` — series id, content type/id, position, optional role, timestamps.
 - `content_ctas` — content type/id, label, URL or internal target, CTA kind, position, tracking key, is_primary, public flag.
 
-Use a documented allow-list for `content_type` and `relation_type`. Start with `writing`, `research_output`, `event`, `resource`, `newsletter_issue`, and `event_recording`. Do not use an unrestricted arbitrary type field in public write paths.
+Use a documented allow-list for `content_type` and `relation_type`. Start with `blog_post`, `research_output`, `event`, `resource`, `newsletter_issue`, and `event_recording`. The public label is **Blog**; `blog_post` is the internal content type. Do not use an unrestricted arbitrary type field in public write paths.
 
 Recommended `relation_type` values:
 
@@ -173,7 +173,7 @@ Add to `comments` or create a compatibility layer:
 - `moderation_status`, `moderated_by`, `moderated_at`;
 - `moderation_events` audit table.
 
-Backfill current `post_id` into `content_type = writing`. Keep `post_id` until all reads and writes use the new reference. Add indexes for source content, topic, status, author, and created date. Keep public RLS limited to visible comments and owner-only moderation writes.
+Backfill current `post_id` into `content_type = blog_post`. Keep `post_id` until all reads and writes use the new reference. Add indexes for source content, topic, status, author, and created date. Keep public RLS limited to visible comments and owner-only moderation writes.
 
 **Acceptance:** Community can filter by source, topic, status, author, date, and reports without loading the entire table; every destructive moderation action is auditable.
 
@@ -202,4 +202,4 @@ Every PR should include migration SQL, TypeScript types, RLS/grants, backfill no
 
 ## Definition of done
 
-The schema work is complete only when the owner can trace one real journey end to end: a visitor discovers a topic, reads a Writing item, follows a CTA, registers for an Event, receives the correct transactional messages, attends or watches the replay, and can be offered a future learning path without being sent unrelated broadcasts.
+The schema work is complete only when the owner can trace one real journey end to end: a visitor discovers a topic, reads a Blog post, follows a CTA, registers for an Event, receives the correct transactional messages, attends or watches the replay, and can be offered a future learning path without being sent unrelated broadcasts.
