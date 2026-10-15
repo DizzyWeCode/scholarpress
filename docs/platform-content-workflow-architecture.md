@@ -20,7 +20,7 @@ Use intentional visitor-facing labels rather than exposing internal table names.
 
 - **Writing** — essays, articles, notes, reflections, explainers, and public thinking.
 - **Research** — scholarly outputs, publications, reports, protocols, data, and research summaries.
-- **Events** — webinars, seminars, lectures, workshops, conferences, book launches, teaching sessions, and recordings.
+- **Events** — webinars, seminars, lectures, workshops, conferences, book launches, and teaching sessions; recordings appear as related resources.
 - **Resources** — a dropdown containing Topics, Start here, Reading lists, Guides, Newsletter archive, and other reusable material.
 - **About** — Dr Fraction, current interests, methods, affiliation, and ways to work together.
 - **Newsletter** or **Follow** — the relationship and email preference route.
@@ -33,6 +33,38 @@ Do not use **Webinars** as the main event concept. A webinar is one format of an
 Do not call every public written item an **article** if the owner also publishes notes, letters, field notes, explainers, and essays. Use **Writing** as the umbrella and retain a content type or series label.
 
 Do not use **newsletter** as the purpose for every email. Distinguish newsletters, publication announcements, event logistics, comment notifications, account messages, and system notifications.
+
+### Terminology audit: the precise terms to use
+
+The following distinctions are important enough to be part of the product vocabulary, database enums, validation messages, and documentation. Informal language may still appear in explanatory copy, but it should not be used as an ambiguous data type.
+
+| Avoid as a data type or primary label | Use instead | Meaning |
+| --- | --- | --- |
+| Paper | **Research output** | Umbrella term for a scholarly work represented in the library. |
+| Article for every written item | **Writing** with a specific content type | Public editorial work such as an article, essay, note, explainer, or field note. |
+| Manuscript as a publication type | **Version** or **publication stage** | A manuscript is a work-in-progress/version in a publication process, not necessarily the final record. |
+| Preprint = published journal article | **Preprint / posted content** | A publicly posted, generally not-yet-peer-reviewed work; its status must be explicit. |
+| Accepted paper | **Accepted manuscript** | The author version accepted after peer review but before publisher typesetting. |
+| Published paper | **Version of record** or **published version** | The final publisher-formatted version, normally with its definitive citation and DOI. |
+| Conference proceeding or presentation | **Conference proceeding** or **Conference presentation** | A proceeding is a scholarly publication; a presentation is an activity/event contribution. |
+| Research author for everyone involved | **Authors** plus **contributors** | Authors are the credited authors; contributors may include people acknowledged through CRediT roles. |
+| CRediT role as proof of authorship | **Contributor role** | CRediT describes contributions; it does not decide who qualifies as an author. |
+| Webinar as the event entity | **Event** with format = Webinar | An event is the scheduled occurrence; webinar describes its delivery format. |
+| Recording as an event | **Event recording** or **on-demand resource** | A recording is an asset or follow-up resource related to an event. |
+| Repeating webinar records | **Event series** plus event instances | A series groups related occurrences; each occurrence remains its own event. |
+| Newsletter for all outbound email | **Broadcast**, **transactional email**, or **notification** | Newsletter is one broadcast content type, not the transport or all-purpose category. |
+| Audience as a recipient filter | **Segment** | Sender-controlled grouping used to target a broadcast. |
+| Segment as an unsubscribe preference | **Topic** or **preference** | Recipient-controlled category used to decide what they want to receive. |
+| Tags as the relationship system | **Topics** and **content relationships** | Topics classify content; relationships explain why two items are connected. |
+| Comments as a flat list | **Discussion** with **comments**, **reports**, and **moderation states** | The content and operational context around a conversation. |
+
+Crossref distinguishes journal articles, conference proceedings, datasets, dissertations, reports and working papers, and posted content such as preprints and eprints. COPE describes preprints as a form of publication that is disseminated before peer review and says platforms should make that status clear. Therefore ScholarPress should not collapse all of these into “paper” or imply peer review where none occurred. [11] [12]
+
+CRediT is a taxonomy of contributor roles, not an authorship test. A person can have multiple roles, multiple people can share a role, and contributors may be listed even when they are not formal authors. The CMS should therefore label the section **Authors and contributors**, with CRediT appearing as optional contribution metadata. [13]
+
+Schema.org uses **EventSeries** for a collection of related events and **Event** for each occurrence. A recording should normally be modeled as an asset or on-demand resource related to the event, not as a replacement for the original scheduled event. [14]
+
+For email, Resend uses **Broadcasts** for bulk marketing mail and **Sending** for transactional email. It uses **Segments** for sender-controlled targeting and **Topics** for recipient-controlled preferences. ScholarPress should use those terms consistently rather than calling every message a newsletter or every recipient group an audience. [15] [16]
 
 ## Information architecture
 
@@ -194,13 +226,14 @@ Use a full-page editor or a persistent right-side workspace with sections, not a
 Require an output type before asking for type-specific metadata:
 
 - Journal article
-- Conference proceeding or presentation
+- Conference proceeding
+- Conference presentation
 - Preprint
 - Working paper
 - Technical report
 - Policy brief
 - Dataset
-- Protocol or methods paper
+- Research protocol or registered report
 - Thesis or dissertation
 - Book chapter
 - Other scholarly output
@@ -215,7 +248,8 @@ Every research output should have:
 - abstract or public summary;
 - output type;
 - contributor list;
-- primary author or owner;
+- authors and contributors;
+- corresponding author or editorial contact where relevant;
 - topics;
 - publication status;
 - publication date or date precision;
@@ -240,7 +274,7 @@ Replace a comma-separated `authors` string with structured contributors over tim
 - affiliation name;
 - affiliation identifier when available;
 - contributor role;
-- author order;
+- author order for formal authors;
 - corresponding-author flag where relevant.
 
 Use CRediT roles where they add value, including Conceptualization, Data curation, Formal analysis, Funding acquisition, Investigation, Methodology, Project administration, Resources, Software, Supervision, Validation, Visualization, Writing—original draft, and Writing—review & editing. Do not make the form overwhelming for a simple solo paper; use a compact contributor editor with an optional advanced contribution section.
@@ -719,3 +753,9 @@ For every milestone, validate:
 [8]: https://meta.discourse.org/t/discourse-moderation-guide-part-1-getting-started/63116?tl=en "Discourse moderation, categories, trust, flags, and community stewardship"
 [9]: https://www.hubermanlab.com/ "Huberman Lab homepage navigation and topic-first visitor pathways"
 [10]: https://www.8020.inc/blog/from-podcast-to-platform-crafting-huberman-labs-digital-home-in-webflow "Huberman Lab platform case study: topic architecture, search, CMS, and email conversion"
+[11]: https://www.crossref.org/services/content-registration/ "Crossref content registration types"
+[12]: https://publicationethics.org/guidance/discussion-document/best-practices-preprints "COPE best practices for preprints"
+[13]: https://credit.niso.org/contributor-roles/ "CRediT contributor roles and authorship distinction"
+[14]: https://schema.org/EventSeries "Schema.org EventSeries"
+[15]: https://resend.com/docs/dashboard/broadcasts/introduction "Resend Broadcasts versus transactional Sending"
+[16]: https://resend.com/docs/knowledge-base/why-use-topics "Resend Topics versus Segments"
