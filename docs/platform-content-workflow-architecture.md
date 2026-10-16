@@ -296,7 +296,7 @@ Do not allow arbitrary self-referential URLs when an internal relationship exist
 
 ### Shared editorial fields
 
-Where useful, Blog posts, Research outputs, Events, and Resources should share:
+Where useful, Blog posts, Research outputs, Events, and Assets should share:
 
 - slug or canonical route;
 - title;
@@ -359,7 +359,7 @@ Every research output should have:
 - external full-text URL or uploaded/public PDF when permitted;
 - access and license information;
 - image/visual metadata when the output is featured;
-- related Blog posts, Events, Topics, and Resources;
+- related Blog posts, Events, Topics, and Assets;
 - citation preview;
 - internal editorial notes kept private.
 
@@ -514,7 +514,7 @@ Every event should support:
 - capacity or ticket/offer details when relevant;
 - hero image, thumbnail, alt text, credit, and aspect variants;
 - agenda and takeaways;
-- related topics, Blog posts, Research, Resources, and course pathway;
+- related topics, Blog posts, Research, Assets, and course pathway;
 - recording URL and replay visibility;
 - cancellation/reschedule information;
 - contact/support email;

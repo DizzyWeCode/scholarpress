@@ -32,7 +32,7 @@ Do not put a permanent sales message into the announcement strip. If there is no
 | --- | --- | --- |
 | Blog | `/blog` | Help visitors browse essays, notes, explainers, and the blog archive. |
 | Research | `/papers` initially, later `/research` | Help visitors discover scholarly outputs, papers, preprints, reports, and methods. |
-| Events | `/webinars` initially, later `/events` | Show upcoming events, event series, and recordings/resources. |
+| Events | `/webinars` initially, later `/events` | Show upcoming events, event series, and recordings/assets. |
 | Topics | `/topics` | Browse the connected body of work by subject. |
 | About | `/about` | Explain Dr Fraction, current interests, and ways to work together. |
 | Follow | `/#newsletter` or `/newsletter` | Make the relationship offer and preference choices clear. |
