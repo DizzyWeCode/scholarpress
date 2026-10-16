@@ -34,7 +34,7 @@ Create:
 - `content_series_items` — series id, content type/id, position, optional role, timestamps.
 - `content_ctas` — content type/id, label, URL or internal target, CTA kind, position, tracking key, is_primary, public flag.
 
-Use a documented allow-list for `content_type` and `relation_type`. Start with `blog_post`, `research_output`, `event`, `resource`, `newsletter_issue`, and `event_recording`. The public label is **Blog**; `blog_post` is the internal content type. Do not use an unrestricted arbitrary type field in public write paths.
+Use a documented allow-list for `content_type` and `relation_type`. Start with `blog_post`, `research_output`, `event`, `asset`, `newsletter_issue`, and `event_recording`. The public label is **Blog**; `blog_post` is the internal content type. Do not use an unrestricted arbitrary `resource` bucket in public write paths.
 
 Recommended `relation_type` values:
 

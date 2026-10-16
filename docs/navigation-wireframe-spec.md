@@ -4,7 +4,7 @@
 
 The navigation should help a first-time visitor answer “where do I begin?” and help a returning visitor reach the latest work quickly. It should borrow Huberman Lab’s intent-led information architecture, not its visual identity.
 
-The shell should expose a small number of durable routes while making deeper discovery available through intentional dropdowns, Topics, Search, and contextual CTAs.
+The shell should expose a small number of durable routes while making deeper discovery available through intentional dropdowns, Topics, Search, and contextual CTAs. Every top-level label should own one visitor job; do not create a generic Resources bucket.
 
 ## Desktop wireframe
 
@@ -12,7 +12,7 @@ The shell should expose a small number of durable routes while making deeper dis
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │ Optional current-message banner                                  Dismiss     │
 ├──────────────────────────────────────────────────────────────────────────────┤
-│ [Dr Fraction mark]  Blog  Events⌄  Resources⌄  About⌄  Follow  [⌕]          │
+│ [Dr Fraction mark]  Blog  Research⌄  Events⌄  Topics⌄  About⌄  Follow [⌕] │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -31,8 +31,9 @@ Do not put a permanent sales message into the announcement strip. If there is no
 | Trigger | Destination | Dropdown purpose |
 | --- | --- | --- |
 | Blog | `/blog` | Help visitors browse essays, notes, explainers, and the blog archive. |
+| Research | `/papers` initially, later `/research` | Help visitors discover scholarly outputs, papers, preprints, reports, and methods. |
 | Events | `/webinars` initially, later `/events` | Show upcoming events, event series, and recordings/resources. |
-| Resources | `/resources` or a meaningful landing page | Collect Topics, Research Papers, Start here, guides, reading lists, and newsletter archive. |
+| Topics | `/topics` | Browse the connected body of work by subject. |
 | About | `/about` | Explain Dr Fraction, current interests, and ways to work together. |
 | Follow | `/#newsletter` or `/newsletter` | Make the relationship offer and preference choices clear. |
 | Search | Search overlay/page | Search the connected library by title, topic, content type, and date. |
@@ -43,16 +44,16 @@ Do not expose empty Teaching, Books, Courses, or Projects routes. Add them only 
 
 ```text
                          ┌──────────────────────────────────────────┐
-                         │ WRITING                                  │
-                         │ Essays, notes, reviews, and conversations│
+                         │ RESEARCH                                 │
+                         │ Scholarly outputs and publication context│
                          ├──────────────────────────────────────────┤
-                         │ All writing                              │
-                         │ Browse the complete Blog archive         │
+                         │ Research library                         │
+                         │ Browse papers and other outputs           │
                          │                                          │
-                         │ Start here                               │
-                         │ A curated route into the work            │
+                         │ Preprints and reports                    │
+                         │ Read work beyond journal articles          │
                          │                                          │
-                         │ Explore themes →                          │
+                         │ Browse topics →                           │
                          └──────────────────────────────────────────┘
 ```
 
@@ -65,22 +66,26 @@ Recommended menus:
 - Blog archive
 - Latest posts
 - Essays and notes
-- Explore themes
+
+**Research**
+
+- Research library
+- Publications and papers
+- Preprints and reports
+- Datasets and protocols, when they exist
 
 **Events**
 
 - Upcoming events
 - Event series
-- Recordings and resources
+- Replays
 - Speaking or teaching enquiries
 
-**Resources**
+**Topics**
 
-- Topics
-- Research Papers
-- Start here
-- Guides and reading lists
-- Newsletter archive
+- Featured topics
+- All topics
+- Follow a topic
 
 **About**
 
@@ -134,8 +139,9 @@ Required behavior:
 │         Full-width menu panel       │
 │                                     │
 │ Blog                            →   │
+│ Research                        ›   │
 │ Events                          ›   │
-│ Resources                      ›   │
+│ Topics                          ›   │
 │ About                           ›   │
 │ Follow the work                 →   │
 │ Search                          ⌕   │
@@ -223,6 +229,6 @@ The navigation is ready when:
 - the page does not scroll behind an open mobile menu;
 - no empty product section appears in navigation;
 - the current announcement strip is optional and dismissible;
-- navigation labels match the product terminology: Blog, Events, Resources, About, Follow, and Search;
-- Research Papers is discoverable from Resources without becoming a competing top-level route;
+- navigation labels match the product terminology: Blog, Research, Events, Topics, About, Follow, and Search;
+- Research Papers is discoverable within Research, while Topics remains a first-class cross-cutting route;
 - automated tests cover pointer, keyboard, touch, route-change, and reduced-motion states.

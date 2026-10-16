@@ -19,17 +19,20 @@ This brief is informed by the current ScholarPress repository and by established
 Use intentional visitor-facing labels rather than exposing internal table names.
 
 - **Blog** — essays, articles, notes, reflections, explainers, and public thinking.
-- **Events** — webinars, seminars, lectures, workshops, conferences, book launches, and teaching sessions; recordings appear as related resources.
-- **Resources** — a discovery dropdown containing Topics, Research Papers, Start here, Guides, Reading lists, Newsletter archive, and other reusable material.
+- **Research** — scholarly outputs, publications, reports, protocols, data, and research summaries.
+- **Events** — webinars, seminars, lectures, workshops, conferences, book launches, and teaching sessions; recordings appear as related event resources.
+- **Topics** — cross-cutting subject pages that connect Blog posts, Research outputs, Events, and selected resources.
 - **About** — Dr Fraction, current interests, methods, affiliation, and ways to work together.
 - **Newsletter** or **Follow** — the relationship and email preference route.
 - **Search** — global discovery across the connected library.
 
-Do not make **Research Papers** a top-level navigation item. It belongs under **Resources**, where visitors can find publications alongside Topics, Guides, and other useful material. In the CMS, use **Research outputs** or **Research library** because the collection may include reports, conference proceedings, preprints, datasets, protocols, and other scholarly outputs. On the public site, use **Research Papers** when the destination specifically contains papers; use **Research outputs** when the collection broadens beyond papers.
+Make **Research** a top-level navigation item because it is central to Dr Fraction’s credibility and work. In the CMS, use **Research outputs** or **Research library** because the collection may include reports, conference proceedings, preprints, datasets, protocols, and other scholarly outputs. Use **Research Papers** as a child label only when a destination specifically contains papers; do not imply that every research output is peer-reviewed.
 
 Do not use **Webinars** as the main event concept. A webinar is one format of an event. Use **Events** publicly and **Event workspace** in admin. Keep the format field for Webinar, Seminar, Lecture, Workshop, Course session, Conference presentation, Book launch, Office hours, or Other.
 
-Do not call every public written item an **article** if the owner also publishes notes, letters, field notes, explainers, and essays. Use **Blog** as the public umbrella and retain a more precise internal content type or series label.
+Do not call every public written item an **article** if the owner also publishes notes, letters, field notes, explainers, and essays. Use **Blog** as the public umbrella and retain a more precise internal content type or series label. The existing `/blog` route makes this more concrete than introducing a new `/writing` route.
+
+Do not use **Resources** as a generic public navigation bucket. Images, PDFs, recordings, and downloadable files are **Assets** in the CMS; curated collections belong to **Topics** or **Series**; research belongs to **Research**; and event recordings remain attached to **Events**.
 
 Do not use **newsletter** as the purpose for every email. Distinguish newsletters, publication announcements, event logistics, comment notifications, account messages, and system notifications.
 
@@ -99,7 +102,7 @@ Use these terms in product decisions and admin copy:
 - **Contact** — a known person with an email or account record.
 - **Segment** — a sender-defined group used for targeting.
 - **Topic** — a subscriber-facing preference or a subject area, depending on context; label the distinction clearly in the UI.
-- **Content type** — the schema of an item, such as Blog post, Research output, Event, or Resource.
+- **Content type** — the schema of an item, such as Blog post, Research output, Event, or Asset.
 - **Content item** — one entry of a content type.
 - **Content asset** — a reusable image, PDF, recording, slide deck, or downloadable file.
 - **Series** — a planned set of related content or events with a shared promise.
@@ -175,22 +178,24 @@ The homepage should orient visitors by intention:
 - Join an Event.
 - Follow the work.
 
-The Resources dropdown should be the main discovery surface rather than a miscellaneous bucket. It should include:
+The public navigation should use one home for each visitor job:
 
-- Topics;
-- Research Papers;
-- Start here;
-- Research guides or explainers;
-- Reading lists;
-- Newsletter archive;
-- Event recordings when enough exist.
+- Blog — read the public prose.
+- Research — find scholarly outputs and publication context.
+- Events — register, attend, or watch a replay.
+- Topics — browse the connected body of work by subject.
+- About — understand Dr Fraction and ways to engage.
+- Follow — subscribe and manage the relationship.
+- Search — find anything across the library.
+
+Do not add a generic Resources route. Research Papers belong under Research; guides and explainers belong under Blog or Topics; event recordings belong under Events; and Start here belongs in the homepage hero, footer, and contextual CTAs.
 
 The public content graph should be visible in small, useful ways:
 
 - an article can show related research outputs;
 - a research output can show an accessible explanation or related article;
 - an event can show the articles, papers, topics, or course pathway behind it;
-- a topic can collect blog posts, research, events, and resources together;
+- a topic can collect Blog posts, Research outputs, Events, and selected Assets together;
 - a newsletter issue can point to the source content it announced;
 - a course interest route can show the event or research theme that generated it.
 
@@ -201,7 +206,7 @@ Every relationship should have a human reason. Use labels such as **Background**
 The admin should be organized around workspaces:
 
 - **Dashboard** — what needs attention now.
-- **Library** — Blog, Research outputs, Events, Topics, Resources.
+- **Library** — Blog, Research outputs, Events, Topics, Assets.
 - **Community** — comments, reports, moderation, and discussion settings.
 - **Audience** — subscribers, preferences, segments, and consent.
 - **Messages** — newsletter drafts, publication announcements, event campaigns, transactional email, delivery history.
@@ -258,7 +263,7 @@ A topic should have:
 - SEO metadata;
 - created and updated timestamps.
 
-Use a join table such as `content_topics` with a content kind and content id, or separate typed join tables if that produces safer foreign-key behavior in Supabase. The implementation should make it possible to attach topics to posts, research outputs, events, resources, and newsletter issues.
+Use a join table such as `content_topics` with a content kind and content id, or separate typed join tables if that produces safer foreign-key behavior in Supabase. The implementation should make it possible to attach topics to Blog posts, Research outputs, Events, Assets, and newsletter issues.
 
 Do not use a loose comma-separated tags field as the long-term relationship model. Keep tags only as an import or lightweight alias if needed.
 
@@ -556,7 +561,7 @@ The page should answer:
 - What happens after registration?
 - Is there a replay or related course path?
 
-Use a real page with hero, summary, speaker/context, agenda, logistics, registration, calendar, access state, replay, resources, and next step. Never make event creation itself a popup-only interaction.
+Use a real page with hero, summary, speaker/context, agenda, logistics, registration, calendar, access state, replay assets, and next step. Never make event creation itself a popup-only interaction.
 
 ## Newsletter and email architecture
 
@@ -669,7 +674,7 @@ Rename the admin area **Community** and make comments one part of a moderation w
 
 ### Article-centered discussion model
 
-Keep comments attached to their source content, but support more than `post_id` as the platform grows. Use a content reference or typed association that can point to Blog posts, Research outputs, Events, and future Resources.
+Keep comments attached to their source content, but support more than `post_id` as the platform grows. Use a content reference or typed association that can point to Blog posts, Research outputs, and Events.
 
 A comment should have:
 
@@ -761,8 +766,8 @@ A form should guide the owner through the work in the order decisions are made:
 
 ### Milestone 1: vocabulary and navigation
 
-- Rename the public writing route to Blog, keep Research outputs as the CMS term, and place Research Papers under Resources; rename Webinars to Events where appropriate.
-- Create the Resources dropdown with Topics, Research Papers, Start here, and Newsletter archive placeholders only when routes exist.
+- Use Blog, Research, Events, Topics, About, Follow, and Search as the public navigation pillars; keep Research outputs and Event workspace as admin terms.
+- Add a real Topics landing page and place Research Papers under Research; keep Start here in the homepage hero, footer, and contextual CTAs.
 - Implement responsive hover/click/keyboard navigation behavior.
 - Add a global search entry point that can later cover all content types.
 
@@ -813,7 +818,7 @@ Newsletters, event messages, account messages, comment notifications, and system
 
 The community admin should be able to find all comments for an article, research output, topic, author, date range, or moderation state without loading the entire history into one flat page.
 
-A topic page should bring together Blog posts, research, events, and resources. A visitor should be able to move from a blog post to evidence, from evidence to an event, and from an event to a future learning path.
+A topic page should bring together Blog posts, Research outputs, Events, and selected Assets. A visitor should be able to move from a blog post to evidence, from evidence to an event, and from an event to a future learning path.
 
 The system should preserve current public routes and data while migrations are introduced. No destructive migration should be performed without an explicit data audit and rollback plan.
 
