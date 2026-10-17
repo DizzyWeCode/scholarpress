@@ -305,3 +305,28 @@ The final action must say **Schedule broadcast**, **Send test**, or **Send trans
 ## Acceptance criteria
 
 The system is ready when a published item can produce a reviewable campaign draft, an event registration produces exactly one confirmation, event reminders are idempotent, event changes reach all affected registrants, and every Broadcast has an explicit Segment, Topic, sender, Reply-To, CTA, and approval state.
+
+
+## Implementation status and next build sequence — 17 October 2026
+
+The sender conventions and workflow rules in this document are approved. Current code provides a newsletter sender, welcome flow, webinar announcement/reminder helpers, delivery logging, Resend webhook handling, and idempotency for the existing webinar paths. It does not yet provide the complete Messages workspace described above.
+
+### Current gaps
+
+- `email_sends` remains a delivery log rather than a campaign/broadcast model.
+- Sender identities are environment/helper defaults, not owner-managed records.
+- Newsletter and webinar sends do not yet share a generic campaign draft/approval/scheduling workflow.
+- Subscriber Topics and sender-defined Segments are not yet modeled as separate concepts.
+- Event confirmation, event-change, replay, no-show, and learning-interest journeys need generic idempotent implementations.
+- Delivery issues need actionable admin states, not only historical rows.
+
+### Safe implementation sequence
+
+1. Create sender identity and message-purpose allow-lists.
+2. Add campaign drafts and explicit audience/topic/sender/CTA fields.
+3. Add preview, test send, approval, and schedule states.
+4. Generalize event confirmation/reminder/change/replay workflows.
+5. Add suppression, bounce, complaint, and unsubscribe enforcement.
+6. Add conversion tracking and delivery issue triage.
+
+No future feature may send a broadcast directly from a publish button without creating a reviewable draft or an explicitly enabled automation run.

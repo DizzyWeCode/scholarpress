@@ -9,6 +9,7 @@ import { PostRow } from "@/components/post-card";
 import { PaperCard } from "@/components/paper-card";
 import { WebinarCard } from "@/components/webinar-card";
 import { NewsletterForm } from "@/components/newsletter-form";
+import { HeroSlideshow } from "@/components/hero-slideshow";
 import type { Post, Paper, Webinar } from "@/lib/types";
 import { isWebinarPast } from "@/lib/utils";
 
@@ -59,52 +60,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <section className="border-b border-line">
-        <div className="mx-auto grid max-w-6xl gap-12 px-5 pb-20 pt-20 sm:px-8 sm:pb-28 sm:pt-28 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-          <div>
-            <Reveal>
-              <p className="text-xs uppercase tracking-[0.25em] text-ink-4">{SITE.name}</p>
-            </Reveal>
-            <Reveal delay={90}>
-              <h1 className="mt-6 max-w-3xl font-serif text-5xl leading-[1.04] tracking-[-0.025em] text-ink sm:text-7xl">
-                {SITE.platformPromise}
-              </h1>
-            </Reveal>
-            <Reveal delay={180}>
-              <p className="mt-7 max-w-xl text-lg leading-relaxed text-ink-3">
-                {SITE.platformDescription}
-              </p>
-            </Reveal>
-            <Reveal delay={240}>
-              <div className="mt-9 flex flex-wrap gap-3">
-                <Link href="#start-here" className="rounded-full bg-ink px-6 py-2.5 text-sm text-paper transition-opacity hover:opacity-80">
-                  Start here
-                </Link>
-                <Link href="/about" className="rounded-full border border-ink px-6 py-2.5 text-sm text-ink transition-colors hover:bg-ink hover:text-paper">
-                  About Dr Fraction
-                </Link>
-              </div>
-            </Reveal>
-            <Reveal delay={300}>
-              <div className="mt-9 flex flex-wrap gap-x-5 gap-y-2 text-sm text-ink-3">
-                <Link href="/blog" className="underline underline-offset-4 hover:text-ink">Writing</Link>
-                <Link href="/papers" className="underline underline-offset-4 hover:text-ink">Research</Link>
-                <Link href="/webinars" className="underline underline-offset-4 hover:text-ink">Events</Link>
-              </div>
-            </Reveal>
-          </div>
-          <Reveal delay={160}>
-            <figure>
-              <div className="relative aspect-[4/3] overflow-hidden rounded border border-line bg-paper-2">
-                <Image src={SITE.images.hero.src} alt={SITE.images.hero.alt} fill sizes="(max-width: 1024px) 100vw, 480px" className="object-cover" priority />
-              </div>
-              <figcaption className="mt-3 max-w-sm text-xs leading-relaxed text-ink-4">
-                A personal platform for work in progress, published work, and the questions between them.
-              </figcaption>
-            </figure>
-          </Reveal>
-        </div>
-      </section>
+      <HeroSlideshow />
 
       <section id="start-here" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-20 sm:px-8 sm:py-24">
         <Reveal>

@@ -316,3 +316,19 @@ Then implement only after those decisions are clear, preserving existing behavio
 [1]: https://www.on24.com/blog/the-best-webinar-email-templates-to-boost-attendance/ "ON24 webinar email sequence and attendance guidance"
 [2]: https://www.zenler.com/blog/webinar-funnel-guide-how-to-build-live-automated-webinar-funnels-that-sell "Zenler webinar funnel guide for course creators"
 [3]: https://univid.io/webinar-marketing/ "Univid webinar marketing, engagement, and funnel measurement guidance"
+
+
+## Implementation status and remaining work — 17 October 2026
+
+The first-party funnel foundation is shipped: dedicated event routes, registration forms, attribution fields, ICS generation, course-interest capture, announcement/reminder foundations, and replay-related fields. The product is **not yet** a complete event operating system.
+
+### Remaining implementation milestones
+
+1. **Generic Event workspace:** full-page editor, event format, attendance mode, speakers, agenda, resources, lifecycle history, preview, duplicate, postpone, cancel, and archive.
+2. **Campaign kit:** reusable event hero/thumbnail/social/email/related-reading placements with sender, audience, topic, and CTA configuration.
+3. **Operational communications:** idempotent confirmation, reminder, live, event-change, replay, attendee, no-show, and learning-interest workflows.
+4. **Attendance and replay:** manual CSV import first; provider webhooks later; never infer attendance from a join click.
+5. **Funnel analytics:** page-to-registration conversion, attribution, attendance conversion when verified, replay, resource, CTA, and waitlist metrics with definitions.
+6. **Course-ready operations:** owner-visible interest queue/export and a documented future course/cohort model; no payments or full LMS yet.
+
+The manual external-provider path remains the default MVP. Provider integrations are optional later adapters, not a prerequisite for a credible event workflow.

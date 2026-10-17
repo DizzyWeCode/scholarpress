@@ -283,3 +283,8 @@ Do not:
 9. Re-run measurements and document the new latency budget.
 
 Before editing production behavior, return a short diagnosis naming the top three measured causes, the proposed fix for each, and the expected risk. Then implement the first safe milestone and validate it completely.
+
+
+## Status and next operational step — 17 October 2026
+
+Treat this document as an operational playbook, not an unfinished feature specification. The next performance pass should instrument the slowest real admin routes first, record server/query/render timings, and fix the top measured bottleneck before adding indexes, caching, rollups, or client-side complexity. No latency change should be accepted without before/after measurements and a check that RLS behavior and freshness expectations remain correct.

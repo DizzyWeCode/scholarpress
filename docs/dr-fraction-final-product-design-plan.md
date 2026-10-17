@@ -586,3 +586,32 @@ The platform should be public enough to attract readers, structured enough to su
 [3]: https://aeon.co/essays "Aeon Essays"
 [4]: https://nesslabs.com/ "Ness Labs"
 [5]: https://thefrontkit.com/products/templates/blog-cms-kit/images/carousel/5.png "The Frontkit Blog CMS Kit reference image"
+
+
+## Decision closure and current implementation status — 17 October 2026
+
+The recommendation in this plan is approved: ScholarPress is a public, person-led publishing house with member participation, broad activity areas, and specific discovery routes.
+
+### Decisions now settled as working defaults
+
+- Public reading and research abstracts; accounts for participation and personalization.
+- Active public pillars: Blog, Research, Events, Topics, About, and Follow.
+- Books, Projects, Courses, and Membership remain hidden until real content or an offer exists.
+- Provider-agnostic events with first-party registration and manual external join URLs are acceptable.
+- Course interest can be captured before a course platform or payments are built.
+- Social/profile URLs require owner confirmation.
+
+### What is implemented
+
+The public shell, responsive navigation, Topics library, Search, person-led homepage, event funnel foundation, DOI/Crossref import, and conventional CMS shell are implemented. The v0 editorial hero and Settings readiness patterns are also integrated selectively.
+
+### What remains on the product roadmap
+
+- Research output editor v2 and normalized contributors/versions.
+- Generic Event workspace, series, attendance/replay, and campaign kit.
+- Connected relations, CTAs, series, and contextual recirculation.
+- Messages workspace, sender identities, campaigns, automations, and delivery triage.
+- Community moderation workspace.
+- Article trust layers, newsletter sample/archive, RSS, real image credits, and measured discovery analytics.
+
+Use `docs/scholarpress-product-roadmap.md` for the implementation order and exit criteria. This document remains the product-design rationale; it is no longer the task list.

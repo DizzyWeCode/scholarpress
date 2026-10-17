@@ -866,3 +866,17 @@ For every milestone, validate:
 [19]: https://www.on24.com/glossary/attendance-conversion-rate/ "ON24 attendance conversion rate"
 [20]: https://www.hubspot.com/marketing-hub-for-events "HubSpot event registration, engagement, follow-up, and conversion tracking"
 [21]: https://www.contentful.com/help/content-models/content-modelling-basics/ "Contentful content models, content types, fields, assets, and references"
+
+
+## Implementation status and completion ledger — 17 October 2026
+
+This architecture is approved as the product direction. The implementation status is now tracked in [`docs/scholarpress-product-roadmap.md`](scholarpress-product-roadmap.md), which is the sequencing source of truth.
+
+- **Milestone 1 — vocabulary and navigation:** substantially shipped. Blog, Research, Events, Topics, About, Follow, Search, responsive menus, public Topics pages, and search are present. Remaining work is automated interaction QA and data-driven announcement content.
+- **Milestone 2 — research output workspace:** partial. DOI/Crossref import and additive scholarly metadata exist; the full-page type-specific editor, normalized contributors, versions, review queue, and publish checklist remain.
+- **Milestone 3 — event workspace:** partial. Dedicated event pages, first-party registration, reminders, ICS, interest capture, and generic event fields exist; the full generic Event workspace, series, lifecycle history, attendance/replay operations, and campaign kit remain.
+- **Milestone 4 — connected library:** partial. Topics and typed topic links exist; explicit content relations, series, CTAs, relation reasons, and broader contextual recirculation remain.
+- **Milestone 5 — messages and automation:** foundation only. Delivery logging and initial newsletter/webinar helpers exist; campaigns, sender identities, segments, approval, templates, and generic automations remain.
+- **Milestone 6 — community workspace:** not started as the planned workspace. Comments remain operationally useful but still need source/topic filters, reports, moderation history, and queues.
+
+Do not describe the architecture as fully implemented until the roadmap definition of done is met. Do not reopen terminology decisions unless the owner records a deliberate product change.

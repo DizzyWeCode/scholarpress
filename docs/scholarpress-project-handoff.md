@@ -680,3 +680,10 @@ Implement DOI/Crossref fetching in the admin paper form, including normalization
 ## 16. One-paragraph handoff summary
 
 ScholarPress is now in the middle of a Phase 7 person-led platform transition and a Phase 6-style conventional CMS redesign. The public experience is intended to present Dr Fraction Dzinjalamala as the author and attraction behind a growing publishing house spanning research, essays, books, events, teaching, and projects. Public reading is open; accounts support participation. The admin area is separated from public chrome and uses a persistent SaaS-style shell with reusable headers, cards, badges, skeletons, and spinners. The homepage and navigation have been reframed around identity, Start here, current work, selected research, and following the work. RLS/security, accessibility, auth clarity, related reading, analytics hardening, and public content access have been addressed. The latest typecheck, lint, and production build pass. The main outstanding tasks are DOI/Crossref fetching, production Supabase SQL deployment once the user’s account is available, setting `NEXT_PUBLIC_SITE_URL`, replacing/approving the real hero imagery, confirming the remaining social profiles, and intentionally committing/reviewing the current working-tree changes.
+
+
+## Current status correction — 17 October 2026
+
+This handoff contains historical context and is not the active task list. The DOI/Crossref feature described in Section 10 is now implemented. The previous working-tree and uncommitted-change notes are superseded by the current branch and pull requests. The active roadmap, implementation status, schema sequence, email plan, and acceptance criteria are consolidated in [`docs/scholarpress-product-roadmap.md`](scholarpress-product-roadmap.md).
+
+Current high-priority items are production migration/env verification, Research output editor v2, Generic Event workspace v2, connected relations/CTAs, Messages workspace, and Community moderation. Do not reopen the completed DOI task unless regression testing finds a defect.
