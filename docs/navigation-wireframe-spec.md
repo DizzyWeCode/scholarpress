@@ -232,3 +232,23 @@ The navigation is ready when:
 - navigation labels match the product terminology: Blog, Research, Events, Topics, About, Follow, and Search;
 - Research Papers is discoverable within Research, while Topics remains a first-class cross-cutting route;
 - automated tests cover pointer, keyboard, touch, route-change, and reduced-motion states.
+
+
+## Implementation status and closure criteria — 17 October 2026
+
+The public navigation specification is substantially implemented in `src/components/site-navigation.tsx` and `src/components/site-chrome.tsx`:
+
+- Blog, Research, Events, Topics, About, Follow, and Search labels are active.
+- Desktop menus support click, delayed hover preview, outside click, Escape, route-change close, and keyboard entry into the panel.
+- Mobile uses a drawer with accordions, focus return, Escape handling, and background-scroll prevention.
+- The optional announcement strip is dismissible and links to a single current destination.
+
+Remaining closure work:
+
+1. Add automated keyboard, pointer, touch, route-change, and reduced-motion tests.
+2. Replace duplicate placeholder submenu destinations with real filtered routes when those archives exist.
+3. Make announcement content come from an active Event/Campaign rather than hard-coded copy.
+4. Run compact-desktop and long-label visual QA so the header never wraps ambiguously.
+5. Add `/research` and `/events` only when route compatibility and content volume justify the public rename.
+
+The specification is considered complete for the current content volume when these tests pass; future Books, Projects, and Courses remain intentionally hidden until they contain a meaningful visitor task.

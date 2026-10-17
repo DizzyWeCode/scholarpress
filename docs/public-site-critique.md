@@ -299,3 +299,8 @@ Once those are correct, the visual redesign becomes much easier. It will be poss
 [4]: https://fs.blog/ "Farnam Street"
 [5]: https://aeon.co/essays "Aeon Essays"
 [6]: https://nesslabs.com/ "Ness Labs"
+
+
+## Status update — 17 October 2026
+
+The critique’s core diagnosis is now reflected in the product: the public shell is person-led, Topics and Search provide discovery paths, the homepage has an editorial hero, and public reading is not treated as a signup gate. The remaining critique items are now sequenced rather than open-ended: article trust layers, deliberate next paths, newsletter sample/archive, real image approval and credits, RSS, and measured discovery analytics. See `docs/scholarpress-product-roadmap.md` for the implementation order and acceptance criteria.

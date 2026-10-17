@@ -203,3 +203,39 @@ Every PR should include migration SQL, TypeScript types, RLS/grants, backfill no
 ## Definition of done
 
 The schema work is complete only when the owner can trace one real journey end to end: a visitor discovers a topic, reads a Blog post, follows a CTA, registers for an Event, receives the correct transactional messages, attends or watches the replay, and can be offered a future learning path without being sent unrelated broadcasts.
+
+
+## Execution status and revised sequence — 17 October 2026
+
+The original PR sequence was directionally correct but too broad for safe implementation. The current repository has shipped migration files for the Topic foundation and additive Research/Event/email fields. It has **not** completed the full schema program.
+
+### Completed schema foundation
+
+- `topics` and `content_topics` tables with owner-write/public-read RLS.
+- Research output metadata columns and allow-listed output/stage/access constraints on `papers`.
+- Generic event fields on the compatibility `webinars` table.
+- Sender, Reply-To, topic, and expanded event-purpose fields on `email_sends`.
+- Supporting indexes for topic, research type, event type, and email purpose access paths.
+
+### Not yet implemented
+
+- `content_relations`, `content_series`, `content_ctas`.
+- Normalized people, organizations, contributors, affiliations, and research-output versions.
+- Generic `events` compatibility model, event series, event people, attendance history, and event registration abstraction.
+- Contacts, topic preferences, consent events, lifecycle events, and segments.
+- Sender identities, campaigns, templates, automation rules/runs, and delivery ledger extensions.
+- Discussion source references and moderation events.
+
+### Required execution order
+
+1. Verify existing migrations in a disposable/staging Supabase project and record row counts.
+2. Apply existing additive migrations in production only after backup and RLS checks.
+3. Add normalized Research contributors/versions.
+4. Add Event series/people/attendance compatibility structures.
+5. Add content relations/series/CTA structures.
+6. Add audience, consent, and lifecycle structures.
+7. Add campaigns, sender identities, automation runs, and delivery extensions.
+8. Add discussion moderation context.
+9. Remove compatibility structures only after an observation window and documented public-route verification.
+
+Every future schema PR must include SQL, grants/RLS, TypeScript types, backfill notes, row-count queries, CI assertions, rollback/forward-fix notes, and a production runbook. The complete exit criterion is the end-to-end Topic → Blog → Research/Event → registration → message → follow-up journey described in `docs/scholarpress-product-roadmap.md`.
