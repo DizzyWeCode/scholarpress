@@ -1,324 +1,61 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getSupabaseBrowser } from "@/lib/supabase/client";
+import { LoaderCircle, Plus, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { Dialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/toast";
-import type { Paper } from "@/lib/types";
-import { normalizeDoi } from "@/lib/utils";
-import { LoaderCircle, Plus, Trash2, X } from "lucide-react";
 import { AdminButton, AdminPageHeader, StatusBadge } from "@/components/admin-ui";
-
-const inputCls =
-  "w-full border-0 border-b border-line bg-transparent px-0 py-2 text-sm text-ink outline-none transition-colors placeholder:text-ink-4 focus:border-ink";
-const labelCls = "block text-xs uppercase tracking-widest text-ink-4";
-
-const empty = {
-  title: "",
-  abstract: "",
-  authors: [],
-  venue: "",
-  year: new Date().getFullYear(),
-  doi: "",
-  url: "",
-  pdf_url: "",
-  tags: [],
-  featured: false,
-  status: "published",
-};
+import type { Paper } from "@/lib/types";
+import { getSupabaseBrowser } from "@/lib/supabase/client";
 
 export default function AdminPapersPage() {
   const [papers, setPapers] = useState<Paper[] | null>(null);
-  const [editing, setEditing] = useState<Paper | null>(null);
-  const [creating, setCreating] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Paper | null>(null);
   const { push } = useToast();
 
   async function load() {
-    const { data } = await getSupabaseBrowser()
-      .from("papers")
-      .select("*")
-      .order("year", { ascending: false });
+    const { data } = await getSupabaseBrowser().from("papers").select("*").order("year", { ascending: false });
     setPapers((data ?? []) as Paper[]);
   }
-  useEffect(() => {
-    load();
-  }, []);
+
+  useEffect(() => { void load(); }, []);
 
   async function remove(id: string) {
     const { error } = await getSupabaseBrowser().from("papers").delete().eq("id", id);
     setPendingDelete(null);
-    if (error) push({ kind: "error", title: "Could not delete paper", body: error.message });
-    else push({ kind: "success", title: "Paper deleted." });
-    load();
+    if (error) push({ kind: "error", title: "Could not delete research output", body: error.message });
+    else push({ kind: "success", title: "Research output deleted." });
+    void load();
   }
 
   return (
     <div>
-      <AdminPageHeader eyebrow="Library" title="Research outputs" description={`${papers?.length ?? 0} scholarly outputs in your workspace.`} actions={<AdminButton onClick={() => setCreating(true)}><Plus className="mr-1.5 h-4 w-4" /> Add research output</AdminButton>} />
-
+      <AdminPageHeader
+        eyebrow="Library"
+        title="Research outputs"
+        description={`${papers?.length ?? 0} scholarly outputs in your workspace. Use the full-page editor to capture the right metadata for each output type.`}
+        actions={<Link href="/admin/papers/new"><AdminButton><Plus className="mr-1.5 h-4 w-4" aria-hidden />Add research output</AdminButton></Link>}
+      />
       <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white px-5 shadow-sm">
         {papers === null ? (
-          <p className="flex items-center gap-2 py-5 text-sm text-ink-3" role="status" aria-label="Loading papers">
-            <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
-            Loading papers
-          </p>
+          <p className="flex items-center gap-2 py-5 text-sm text-ink-3" role="status"><LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />Loading research outputs</p>
         ) : papers.length === 0 ? (
-          <p className="border-t border-line py-12 text-sm text-ink-3">
-            No research outputs yet.
-          </p>
+          <div className="border-t border-line py-12"><p className="text-sm text-ink-3">No research outputs yet.</p><Link href="/admin/papers/new" className="mt-4 inline-flex text-sm font-medium text-indigo-700 hover:underline">Create the first output</Link></div>
         ) : (
           papers.map((paper) => (
-            <div
-              key={paper.id}
-              className="grid gap-1 border-t border-line py-5 sm:grid-cols-[1fr_auto_auto] sm:items-baseline sm:gap-6"
-            >
-              <button
-                onClick={() => setEditing(paper)}
-                className="text-left font-serif text-lg tracking-tight text-ink transition-opacity hover:opacity-60"
-              >
-                {paper.title}
-                <span className="ml-3 inline-flex items-center gap-2 text-xs font-sans"><StatusBadge status={paper.status} /> {paper.year ?? "—"}</span>
-              </button>
-              <span className="text-xs text-ink-4">{paper.venue}</span>
-              <button
-                onClick={() => setPendingDelete(paper)}
-                className="justify-self-start p-1 text-ink-4 transition-colors hover:text-red-700 sm:justify-self-end"
-                aria-label={`Delete ${paper.title}`}
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+            <div key={paper.id} className="grid gap-2 border-t border-line py-5 sm:grid-cols-[1fr_auto_auto] sm:items-center sm:gap-6">
+              <Link href={`/admin/papers/${paper.id}`} className="min-w-0 text-left hover:opacity-70">
+                <span className="block font-serif text-lg tracking-tight text-ink">{paper.title}</span>
+                <span className="mt-2 flex flex-wrap items-center gap-2 text-xs text-ink-4"><StatusBadge status={paper.status} />{paper.output_type?.replace(/_/g, " ") ?? "Research output"}{paper.year ? ` · ${paper.year}` : ""}</span>
+              </Link>
+              <span className="text-xs text-ink-4">{paper.journal_title || paper.venue || paper.publisher || "Metadata not yet added"}</span>
+              <button type="button" onClick={() => setPendingDelete(paper)} className="justify-self-start p-1 text-ink-4 transition-colors hover:text-red-700 sm:justify-self-end" aria-label={`Delete ${paper.title}`}><Trash2 className="h-4 w-4" aria-hidden /></button>
             </div>
           ))
         )}
       </div>
-
-      {(creating || editing) && (
-        <PaperForm
-          paper={editing ?? undefined}
-          onClose={() => {
-            setCreating(false);
-            setEditing(null);
-          }}
-          onSaved={() => {
-            setCreating(false);
-            setEditing(null);
-            load();
-          }}
-        />
-      )}
-      <ConfirmDialog
-        open={Boolean(pendingDelete)}
-        title="Delete this paper?"
-        body={`“${pendingDelete?.title ?? ""}” will be permanently removed. This cannot be undone.`}
-        confirmLabel="Delete paper"
-        danger
-        onCancel={() => setPendingDelete(null)}
-        onConfirm={() => pendingDelete && void remove(pendingDelete.id)}
-      />
+      <ConfirmDialog open={Boolean(pendingDelete)} title="Delete this research output?" body={`“${pendingDelete?.title ?? ""}” will be permanently removed. This cannot be undone.`} confirmLabel="Delete research output" danger onCancel={() => setPendingDelete(null)} onConfirm={() => pendingDelete && void remove(pendingDelete.id)} />
     </div>
-  );
-}
-
-function PaperForm({
-  paper,
-  onClose,
-  onSaved,
-}: {
-  paper?: Paper;
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const [form, setForm] = useState({
-    title: paper?.title ?? empty.title,
-    abstract: paper?.abstract ?? "",
-    authors: (paper?.authors ?? []).join(", "),
-    venue: paper?.venue ?? "",
-    year: paper?.year ?? empty.year,
-    doi: paper?.doi ?? "",
-    url: paper?.url ?? "",
-    pdf_url: paper?.pdf_url ?? "",
-    tags: (paper?.tags ?? []).join(", "),
-    featured: paper?.featured ?? false,
-    status: paper?.status ?? "published",
-  });
-  const [busy, setBusy] = useState(false);
-  const [fetchingDoi, setFetchingDoi] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
-
-  async function fetchFromDoi() {
-    const doi = normalizeDoi(form.doi);
-    if (!doi) {
-      setError("Enter a valid DOI such as 10.1000/example before fetching.");
-      return;
-    }
-    setError(null);
-    setFetchingDoi(true);
-    try {
-      const response = await fetch("/api/admin/papers/crossref", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ doi }),
-      });
-      const result = (await response.json()) as {
-        error?: string;
-        metadata?: {
-          title: string | null;
-          abstract: string | null;
-          authors: string[];
-          venue: string | null;
-          year: number | null;
-          doi: string;
-          url: string;
-        };
-      };
-      if (!response.ok || !result.metadata) {
-        setError(result.error ?? "Could not fetch DOI metadata.");
-        return;
-      }
-      const metadata = result.metadata;
-      setForm((current) => ({
-        ...current,
-        doi: metadata.doi,
-        title: current.title.trim() ? current.title : metadata.title ?? current.title,
-        abstract: current.abstract.trim() ? current.abstract : metadata.abstract ?? current.abstract,
-        authors: current.authors.trim() ? current.authors : metadata.authors.join(", "),
-        venue: current.venue.trim() ? current.venue : metadata.venue ?? current.venue,
-        year: current.year ?? metadata.year,
-        url: current.url.trim() ? current.url : metadata.url,
-      }));
-    } catch {
-      setError("Could not fetch DOI metadata. Check your connection and try again.");
-    } finally {
-      setFetchingDoi(false);
-    }
-  }
-
-  async function save() {
-    if (!form.title.trim()) {
-      setError("Title is required.");
-      return;
-    }
-    const doi = normalizeDoi(form.doi);
-    if (form.doi.trim() && !doi) {
-      setError("Enter a valid DOI such as 10.1000/example.");
-      return;
-    }
-    setError(null);
-    setBusy(true);
-    const payload = {
-      title: form.title.trim(),
-      abstract: form.abstract.trim() || null,
-      authors: form.authors.split(",").map((a) => a.trim()).filter(Boolean),
-      venue: form.venue.trim() || null,
-      year: form.year || null,
-      doi,
-      url: form.url.trim() || null,
-      pdf_url: form.pdf_url.trim() || null,
-      tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
-      featured: form.featured,
-      status: form.status,
-    };
-    const supabase = getSupabaseBrowser();
-    const { error } = paper
-      ? await supabase.from("papers").update(payload).eq("id", paper.id)
-      : await supabase.from("papers").insert(payload);
-    setBusy(false);
-    if (!error) onSaved();
-    else setError(error.message);
-  }
-
-  return (
-    <Dialog open title={paper ? "Edit paper" : "New paper"} onClose={onClose}>
-      <div>
-        <div className="flex justify-end">
-          <button onClick={onClose} aria-label="Close" className="p-1 text-ink-4 hover:text-ink">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="mt-6 grid gap-6">
-          <div>
-            <label className={labelCls} htmlFor="paper-title">Title</label>
-            <input id="paper-title" value={form.title} onChange={(e) => set("title", e.target.value)} className={`${inputCls} mt-2`} />
-          </div>
-          <div>
-            <label className={labelCls} htmlFor="paper-authors">Authors (comma separated)</label>
-            <input id="paper-authors" value={form.authors} onChange={(e) => set("authors", e.target.value)} placeholder="A. Moyo, J. Smith" className={`${inputCls} mt-2`} />
-          </div>
-          <div>
-            <label className={labelCls} htmlFor="paper-abstract">Abstract</label>
-            <textarea id="paper-abstract" value={form.abstract} onChange={(e) => set("abstract", e.target.value)} rows={4} className={`${inputCls} mt-2 resize-y`} />
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div>
-              <label className={labelCls} htmlFor="paper-venue">Venue (journal / conference)</label>
-              <input id="paper-venue" value={form.venue} onChange={(e) => set("venue", e.target.value)} className={`${inputCls} mt-2`} />
-            </div>
-            <div>
-              <label className={labelCls} htmlFor="paper-year">Year</label>
-              <input id="paper-year" type="number" value={form.year ?? ""} onChange={(e) => set("year", e.target.value ? Number(e.target.value) : null)} className={`${inputCls} mt-2`} />
-            </div>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-3">
-            <div>
-              <label className={labelCls} htmlFor="paper-doi">DOI</label>
-              <div className="mt-2 flex items-center gap-2">
-                <input id="paper-doi" value={form.doi} onChange={(e) => set("doi", e.target.value)} placeholder="10.1000/xyz123" className={inputCls} />
-                <button
-                  type="button"
-                  onClick={() => void fetchFromDoi()}
-                  disabled={fetchingDoi || busy}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {fetchingDoi ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : null}
-                  {fetchingDoi ? "Fetching…" : "Fetch from DOI"}
-                </button>
-              </div>
-              <p className="mt-2 text-xs text-ink-4">Crossref fills only blank fields; your edits are preserved.</p>
-            </div>
-            <div>
-              <label className={labelCls} htmlFor="paper-url">Publisher URL</label>
-              <input id="paper-url" value={form.url} onChange={(e) => set("url", e.target.value)} className={`${inputCls} mt-2`} />
-            </div>
-            <div>
-              <label className={labelCls} htmlFor="paper-pdf-url">PDF URL</label>
-              <input id="paper-pdf-url" value={form.pdf_url} onChange={(e) => set("pdf_url", e.target.value)} className={`${inputCls} mt-2`} />
-            </div>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div>
-              <label className={labelCls} htmlFor="paper-tags">Tags (comma separated)</label>
-              <input id="paper-tags" value={form.tags} onChange={(e) => set("tags", e.target.value)} className={`${inputCls} mt-2`} />
-            </div>
-            <div>
-              <label className={labelCls} htmlFor="paper-status">Status</label>
-              <select id="paper-status" value={form.status} onChange={(e) => set("status", e.target.value)} className={`${inputCls} mt-2`}>
-                <option value="published">Published</option>
-                <option value="draft">Draft</option>
-              </select>
-            </div>
-          </div>
-          <label className="flex items-center gap-2 text-sm text-ink-2">
-            <input type="checkbox" checked={form.featured} onChange={(e) => set("featured", e.target.checked)} />
-            Feature on homepage
-          </label>
-        </div>
-        {error ? <p role="alert" className="mt-5 text-sm text-red-700">{error}</p> : null}
-        <div className="mt-8 flex gap-3">
-          <button
-            onClick={save}
-            disabled={busy}
-            className="rounded-full bg-ink px-6 py-2.5 text-sm text-paper transition-opacity hover:opacity-80 disabled:opacity-40"
-          >
-            {busy ? "Saving…" : "Save paper"}
-          </button>
-          <button onClick={onClose} className="rounded-full border border-line px-6 py-2.5 text-sm text-ink-3">
-            Cancel
-          </button>
-        </div>
-      </div>
-    </Dialog>
   );
 }
