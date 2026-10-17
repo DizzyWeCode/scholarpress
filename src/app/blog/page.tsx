@@ -40,7 +40,7 @@ export default async function BlogPage({
   return (
     <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
       <Reveal>
-        <p className="text-xs uppercase tracking-[0.25em] text-ink-4">Writing</p>
+        <p className="text-xs uppercase tracking-[0.25em] text-ink-4">Blog</p>
         <h1 className="mt-4 font-serif text-4xl tracking-tight text-ink sm:text-6xl">
           Essays, notes, and ideas
         </h1>

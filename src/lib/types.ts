@@ -63,7 +63,48 @@ export interface Paper {
   tags: string[];
   featured: boolean;
   status: "draft" | "published";
+  output_type: "journal_article" | "conference_proceeding" | "conference_presentation" | "preprint" | "working_paper" | "technical_report" | "policy_brief" | "dataset" | "research_protocol" | "registered_report" | "thesis_dissertation" | "book_chapter" | "other";
+  publication_stage: "submitted_manuscript" | "under_review" | "accepted_manuscript" | "version_of_record" | "posted_content" | "withdrawn" | "unknown";
+  public_summary: string | null;
+  publication_date_precision: "year" | "month" | "day";
+  online_publication_date: string | null;
+  print_publication_date: string | null;
+  accepted_date: string | null;
+  journal_title: string | null;
+  journal_abbreviation: string | null;
+  issn: string | null;
+  eissn: string | null;
+  volume: string | null;
+  issue: string | null;
+  article_number: string | null;
+  first_page: string | null;
+  last_page: string | null;
+  publisher: string | null;
+  pmid: string | null;
+  isbn: string | null;
+  repository_identifier: string | null;
+  publisher_url: string | null;
+  version_of_record_url: string | null;
+  access_status: "open_access" | "restricted" | "repository" | "unknown";
+  license: string | null;
+  funder: string | null;
+  grant_identifier: string | null;
+  ethics_reference: string | null;
+  citation_text: string | null;
+  metadata_source: string | null;
+  metadata_retrieved_at: string | null;
+  contributors: PaperContributor[];
   created_at: string;
+}
+
+export interface PaperContributor {
+  name: string;
+  given_name?: string;
+  family_name?: string;
+  orcid?: string;
+  affiliation?: string;
+  corresponding?: boolean;
+  roles?: string[];
 }
 
 export interface Webinar {
@@ -101,6 +142,17 @@ export interface Webinar {
   course_cta_label: string | null;
   course_cta_url: string | null;
   related_post_ids: string[];
+  event_type: "webinar" | "lecture" | "seminar" | "workshop" | "roundtable" | "conference" | "course_session" | "other";
+  attendance_mode: "online" | "offline" | "mixed";
+  location_name: string | null;
+  location_address: string | null;
+  online_url: string | null;
+  end_at: string | null;
+  notification_enabled: boolean;
+  notification_topic: string;
+  notification_from: string;
+  notification_reply_to: string | null;
+  notification_sent_at: string | null;
   status: WebinarStatus;
   created_at: string;
 }

@@ -64,7 +64,7 @@ export default function AdminWebinarsPage() {
 
   return (
     <div>
-      <AdminPageHeader eyebrow="Content" title="Webinars" description={`${webinars?.length ?? 0} sessions in your workspace.`} actions={<AdminButton onClick={() => setCreating(true)}><Plus className="mr-1.5 h-4 w-4" /> New webinar</AdminButton>} />
+      <AdminPageHeader eyebrow="Reach" title="Events" description={`${webinars?.length ?? 0} events in your workspace.`} actions={<AdminButton onClick={() => setCreating(true)}><Plus className="mr-1.5 h-4 w-4" /> New event</AdminButton>} />
 
       {notice && (
         <p className="mt-4 border-t border-line pt-4 text-sm text-ink-3">{notice}</p>
@@ -78,7 +78,7 @@ export default function AdminWebinarsPage() {
           <AdminListSkeleton rows={4} />
         ) : visibleWebinars.length === 0 ? (
           <p className="border-t border-line py-12 text-sm text-ink-3">
-            No webinars match this view.
+            No events match this view.
           </p>
         ) : (
           visibleWebinars.map((w) => (

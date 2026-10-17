@@ -14,7 +14,7 @@ const inputCls =
   "w-full border-0 border-b border-line bg-transparent px-0 py-2 text-sm text-ink outline-none transition-colors placeholder:text-ink-4 focus:border-ink";
 const labelCls = "block text-xs uppercase tracking-widest text-ink-4";
 
-const empty: Omit<Paper, "id" | "created_at"> = {
+const empty = {
   title: "",
   abstract: "",
   authors: [],
@@ -56,7 +56,7 @@ export default function AdminPapersPage() {
 
   return (
     <div>
-      <AdminPageHeader eyebrow="Content" title="Papers" description={`${papers?.length ?? 0} publications in your workspace.`} actions={<AdminButton onClick={() => setCreating(true)}><Plus className="mr-1.5 h-4 w-4" /> Add paper</AdminButton>} />
+      <AdminPageHeader eyebrow="Library" title="Research outputs" description={`${papers?.length ?? 0} scholarly outputs in your workspace.`} actions={<AdminButton onClick={() => setCreating(true)}><Plus className="mr-1.5 h-4 w-4" /> Add research output</AdminButton>} />
 
       <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white px-5 shadow-sm">
         {papers === null ? (
@@ -66,7 +66,7 @@ export default function AdminPapersPage() {
           </p>
         ) : papers.length === 0 ? (
           <p className="border-t border-line py-12 text-sm text-ink-3">
-            No papers yet.
+            No research outputs yet.
           </p>
         ) : (
           papers.map((paper) => (
